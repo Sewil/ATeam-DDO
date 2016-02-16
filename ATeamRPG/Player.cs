@@ -10,7 +10,8 @@ namespace ATeamRPG {
             Name = name;
             Health = 20;
             Damage = 5;
-        }
+         }
+        public Cell PlayerPosition { get; set; }
         public string Name { get; set; }
         int health;
         public int Health {

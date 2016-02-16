@@ -97,39 +97,46 @@ namespace ATeamRPG {
                 var emptyCells = Cells.Cast<Cell>().Where(c => c.IsEmpty).ToList();
                 var randomCell = emptyCells[random.Next(0, emptyCells.Count())];
                 randomCell.Player = player;
+                player.PlayerPosition = randomCell;
             }
         }
-        void MovePlayer(ConsoleKey key, Cell cell) {
+        public void MovePlayer(ConsoleKey key, Player player) {
+            var currentCell = player.PlayerPosition;
             Cell newCell = null;
+            var playerPosition = player.PlayerPosition;
             switch (key) {
                 case ConsoleKey.UpArrow:
-                    if (cell.Y > 0) {
-                        newCell = Cells[cell.X, cell.Y - 1];
+                    if (playerPosition.Y > 0) {
+                        newCell = Cells[playerPosition.Y - 1, playerPosition.X];
+                        currentCell.Player = null;
                     }
                     break;
                 case ConsoleKey.RightArrow:
-                    if (cell.X < WIDTH - 1) {
-                        newCell = Cells[cell.X + 1, cell.Y];
+                    if (playerPosition.X < WIDTH - 1) {
+                        newCell = Cells[playerPosition.Y, playerPosition.X + 1];
+                        currentCell.Player = null;
                     }
                     break;
 
                 case ConsoleKey.DownArrow:
-                    if (cell.Y < HEIGHT - 1) {
-                        newCell = Cells[cell.X, cell.Y + 1];
+                    if (playerPosition.Y < HEIGHT - 1) {
+                        newCell = Cells[playerPosition.Y + 1, playerPosition.X];
+                        currentCell.Player = null;
                     }
                     break;
 
                 case ConsoleKey.LeftArrow:
-                    if (cell.X > 0) {
-                        newCell = Cells[cell.X - 1, cell.Y];
+                    if (playerPosition.X > 0) {
+                        newCell = Cells[playerPosition.Y, playerPosition.X - 1];
+                        currentCell.Player = null;
                     }
                     break;
             }
             if (newCell.HasPlayer) {
-                newCell.Player.Health -= cell.Player.Damage;
+                newCell.Player.Health -= playerPosition.Player.Damage;
             } else {
-                newCell.Player = cell.Player;
-                cell.Player = null;
+                newCell.Player = playerPosition.Player;
+                playerPosition.Player = null;
             }
         }
     }
