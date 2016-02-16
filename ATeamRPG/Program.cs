@@ -11,17 +11,9 @@ namespace ATeamRPG
         
         public static void Main(string[] args)
         {
-            Console.WriteLine("A Team");
-            string Name = Console.ReadLine();
-        }
-
-        static void Poo()
-        {
-            Console.WriteLine("Oj, här luktade det illa!");
-        }
-        static void JoelLovesToBurn()
-        {
-
+            var playerOne = new Player("Olle");
+            var playerTwo = new Player("Pelle");
+            var map = new Map();
         }
     }
 }
