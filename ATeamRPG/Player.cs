@@ -12,8 +12,17 @@ namespace ATeamRPG {
             Damage = 5;
         }
         public string Name { get; set; }
-        public int XPosition { get; set; }
-        public int YPosition { get; set; }
+        public Cell Cell { get; set; }
+        public int X {
+            get {
+                return Cell.X;
+            }
+        }
+        public int Y {
+            get {
+                return Cell.Y;
+            }
+        }
         public int Health { get; set; }
         public int Gold { get; set; }
         public int Damage { get; set; }

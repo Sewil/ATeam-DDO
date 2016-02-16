@@ -4,14 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ATeamRPG
-{
-    class Program
-    {
+namespace ATeamRPG {
+    class Program {
         static bool[,] map;
 
-        static void Main(string[] args)
-        {
+        static void Main(string[] args) {
 
             Console.WriteLine("Input the name of Player 1: ");
             var nameOne = Console.ReadLine();
@@ -22,29 +19,23 @@ namespace ATeamRPG
             Map map = new Map();
             map.PlaceGold();
             map.Draw();
+            map.SpawnPlayers(playerOne, playerTwo);
             do {
                 ConsoleKey key = Console.ReadKey().Key;
             } while (true);
         }
 
-        static void CreateMap()
-        {
+        static void CreateMap() {
             map = MapFactory.GenerateMap();
         }
 
-        static void DrawMap()
-        {
-            for (int y = 0; y < map.GetLength(0); y++)
-            {
-                for (int x = 0; x < map.GetLength(1); x++)
-                {
-                    if (map[y, x] == true)
-                    {
+        static void DrawMap() {
+            for (int y = 0; y < map.GetLength(0); y++) {
+                for (int x = 0; x < map.GetLength(1); x++) {
+                    if (map[y, x] == true) {
                         Console.ForegroundColor = ConsoleColor.DarkGreen;
                         Console.Write("#");
-                    }
-                    else if (map[y, x] == false)
-                    {
+                    } else if (map[y, x] == false) {
                         Console.ForegroundColor = ConsoleColor.White;
                         Console.Write(".");
                     }
@@ -54,35 +45,27 @@ namespace ATeamRPG
             }
         }
 
-    static void JoelLovesToBurn()
-    {
+        static void MovePlayer(ConsoleKey key, Map map, Player player) {
+            switch (key) {
+                case ConsoleKey.UpArrow:
+                    if (player.Y > 0)
+                        player.Cell = map.Cells[player.X, player.Y - 1];
+                    break;
+                case ConsoleKey.RightArrow:
+                    if (player.X < Map.WIDTH - 1)
+                        player.Cell = map.Cells[player.X + 1, player.Y];
+                    break;
 
-    }
+                case ConsoleKey.DownArrow:
+                    if (player.Y < Map.HEIGHT - 1)
+                        player.Cell = map.Cells[player.X, player.Y + 1];
+                    break;
 
-    static void MovePlayer(ConsoleKey key, Player player)
-    {
-        switch (key)
-        {
-            case ConsoleKey.UpArrow:
-                if (player.YPosition > 0)
-                    player.YPosition--;
-                break;
-
-            case ConsoleKey.RightArrow:
-                if (player.XPosition < Map.WIDTH - 1)
-                    player.XPosition++;
-                break;
-
-            case ConsoleKey.DownArrow:
-                if (player.YPosition < Map.HEIGHT - 1)
-                    player.YPosition++;
-                break;
-
-            case ConsoleKey.LeftArrow:
-                if (player.XPosition > 0)
-                    player.XPosition--;
-                break;
+                case ConsoleKey.LeftArrow:
+                    if (player.X > 0)
+                        player.Cell = map.Cells[player.X - 1, player.Y];
+                    break;
+            }
         }
     }
-}
 }

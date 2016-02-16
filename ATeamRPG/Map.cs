@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 
 namespace ATeamRPG {
     class Cell {
+        public bool HasGold {
+            get {
+                return Gold > 0;
+            }
+        }
         public int Gold { get; set; }
         public int Y { get; set; }
         public int X { get; set; }
@@ -32,7 +37,7 @@ namespace ATeamRPG {
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
                     var cell = Cells[y, x];
-                    if (cell.Gold > 0) {
+                    if (cell.HasGold) {
                         Console.BackgroundColor = ConsoleColor.Yellow;
                     } else {
                         Console.BackgroundColor = ConsoleColor.DarkGray;
@@ -55,11 +60,14 @@ namespace ATeamRPG {
         }
 
         public void SpawnPlayers(Player playerOne, Player playerTwo) {
-            playerOne.XPosition = 0;
-            playerOne.YPosition = 0;
+            var random = new Random();
+            var emptyCells = Cells.Cast<Cell>().Where(c => !c.HasGold).ToList();
+            var randomCell = emptyCells[random.Next(0, emptyCells.Count())];
+            playerOne.Cell = randomCell;
 
-            playerTwo.XPosition = 10;
-            playerTwo.YPosition = 10;
+            emptyCells = Cells.Cast<Cell>().Where(c => c != playerOne.Cell && !c.HasGold).ToList();
+            randomCell = emptyCells[random.Next(0, emptyCells.Count())];
+            playerTwo.Cell = randomCell;
         }
     }
 }
