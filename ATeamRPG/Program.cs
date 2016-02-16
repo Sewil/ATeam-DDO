@@ -16,7 +16,7 @@ namespace ATeamRPG
             MovePlayer(key);
         }
 
-        static void Poo()
+        public static void Main(string[] args)
         {
 
         }
