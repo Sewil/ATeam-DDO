@@ -10,6 +10,9 @@ namespace ATeamRPG
     {
         static void Main(string[] args)
         {
+            var playerOne = new Player();
+            var playerTwo = new Player();
+            var map = new Map();
         }
     }
 }

@@ -21,6 +21,7 @@ namespace ATeamRPG
         const int WIDTH = 10;
         const int HEIGHT = 10;
         public Cell[,] Cells = new Cell[HEIGHT, WIDTH];
+
         public Map()
         {
             for (int y = 0; y < HEIGHT; y++)
@@ -30,6 +31,15 @@ namespace ATeamRPG
                     Cells[y, x] = new Cell(y, x);
                 }
             }
+        }
+
+        public void SpawnPlayers(Player playerOne, Player playerTwo)
+        {
+            playerOne.XPosition = 0;
+            playerOne.YPosition = 0;
+
+            playerTwo.XPosition = 10;
+            playerTwo.YPosition = 10;
         }
     }
 }
