@@ -70,6 +70,7 @@ namespace ATeamRPG {
                         Console.BackgroundColor = ConsoleColor.Yellow;
                         Console.Write(" ");
                     } else if (cell.HasPlayer) {
+                        Console.ForegroundColor = cell.Player.Colour;
                         Console.Write("P");
                     } else {
                         Console.BackgroundColor = ConsoleColor.DarkGray;

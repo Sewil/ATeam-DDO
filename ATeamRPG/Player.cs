@@ -14,6 +14,7 @@ namespace ATeamRPG {
         public Cell PlayerPosition { get; set; }
         public string Name { get; set; }
         int health;
+        public ConsoleColor Colour { get; set; }
         public int Health {
             get {
                 return health;
