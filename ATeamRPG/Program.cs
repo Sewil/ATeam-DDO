@@ -12,6 +12,8 @@ namespace ATeamRPG
         static void Main(string[] args)
         {
             Console.WriteLine("A Team");
+            ConsoleKey key = Console.ReadKey().Key;
+            MovePlayer(key);
         }
 
         static void Poo()
@@ -21,6 +23,32 @@ namespace ATeamRPG
         static void JoelLovesToBurn()
         {
 
+        }
+
+        static void MovePlayer(ConsoleKey key)
+        {
+            switch(key)
+            {
+                case ConsoleKey.UpArrow:
+                    if (player.YPosition > 0)
+                        player.YPosition--;
+                    break;
+
+                case ConsoleKey.RightArrow:
+                    if (player.XPosition < )
+                        player.XPosition;
+                    break;
+
+                case ConsoleKey.DownArrow:
+                    if (player.YPosition < )
+                        player.YPosition++;
+                    break;
+
+                case ConsoleKey.LeftArrow:
+                    if (player.XPosition > 0)
+                        player.XPosition--;
+                    break;
+            }
         }
     }
 }
