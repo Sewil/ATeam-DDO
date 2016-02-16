@@ -27,7 +27,21 @@ namespace ATeamRPG {
                 }
             }
         }
-
+        public void Draw() {
+            Console.ForegroundColor = ConsoleColor.White;
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int x = 0; x < WIDTH; x++) {
+                    var cell = Cells[y, x];
+                    if (cell.Gold > 0) {
+                        Console.BackgroundColor = ConsoleColor.Yellow;
+                    } else {
+                        Console.BackgroundColor = ConsoleColor.DarkGray;
+                    }
+                    Console.Write(" ");
+                }
+                Console.WriteLine();
+            }
+        }
         public void PlaceGold() {
             var random = new Random();
             for (int y = 0; y < HEIGHT; y++) {

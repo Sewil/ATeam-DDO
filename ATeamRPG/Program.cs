@@ -20,11 +20,11 @@ namespace ATeamRPG
             var nameTwo = Console.ReadLine();
             var playerTwo = new Player(nameTwo);
             Map map = new Map();
-            ConsoleKey key = Console.ReadKey().Key;
-            MovePlayer(key, playerOne);
-
-            CreateMap();
-            DrawMap();
+            map.PlaceGold();
+            map.Draw();
+            do {
+                ConsoleKey key = Console.ReadKey().Key;
+            } while (true);
         }
 
         static void CreateMap()
