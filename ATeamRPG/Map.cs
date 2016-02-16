@@ -94,7 +94,7 @@ namespace ATeamRPG {
         public void SpawnPlayers(params Player[] players) {
             var random = new Random();
             foreach (var player in players) {
-                var emptyCells = Cells.Cast<Cell>().Where(c => !c.IsEmpty).ToList();
+                var emptyCells = Cells.Cast<Cell>().Where(c => c.IsEmpty).ToList();
                 var randomCell = emptyCells[random.Next(0, emptyCells.Count())];
                 randomCell.Player = player;
             }
