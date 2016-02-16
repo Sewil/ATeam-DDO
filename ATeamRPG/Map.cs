@@ -68,10 +68,13 @@ namespace ATeamRPG {
                     var cell = Cells[y, x];
                     if (cell.HasGold) {
                         Console.BackgroundColor = ConsoleColor.Yellow;
+                        Console.Write(" ");
+                    } else if (cell.HasPlayer) {
+                        Console.Write("P");
                     } else {
                         Console.BackgroundColor = ConsoleColor.DarkGray;
+                        Console.Write(" ");
                     }
-                    Console.Write(" ");
                 }
                 Console.WriteLine();
             }
