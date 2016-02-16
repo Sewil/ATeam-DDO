@@ -12,5 +12,10 @@ namespace ATeamRPG
         static void Main(string[] args)
         {
         }
+
+        static void Poo()
+        {
+
+        }
     }
 }
