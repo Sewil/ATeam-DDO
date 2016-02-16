@@ -8,7 +8,8 @@ namespace ATeamRPG
 {
     class Program
     {
-        //Working????
+        static bool[,] map;
+
         static void Main(string[] args)
         {
 
@@ -21,37 +22,67 @@ namespace ATeamRPG
             Map map = new Map();
             ConsoleKey key = Console.ReadKey().Key;
             MovePlayer(key, playerOne);
-        }
-        
-        static void JoelLovesToBurn()
-        {
 
+            CreateMap();
+            DrawMap();
         }
 
-        static void MovePlayer(ConsoleKey key, Player player)
+        static void CreateMap()
         {
-            switch(key)
+            map = MapFactory.GenerateMap();
+        }
+
+        static void DrawMap()
+        {
+            for (int y = 0; y < map.GetLength(0); y++)
             {
-                case ConsoleKey.UpArrow:
-                    if (player.YPosition > 0)
-                        player.YPosition--;
-                    break;
-
-                case ConsoleKey.RightArrow:
-                    if (player.XPosition < Map.WIDTH - 1)
-                        player.XPosition++;
-                    break;
-
-                case ConsoleKey.DownArrow:
-                    if (player.YPosition < Map.HEIGHT - 1)
-                        player.YPosition++;
-                    break;
-
-                case ConsoleKey.LeftArrow:
-                    if (player.XPosition > 0)
-                        player.XPosition--;
-                    break;
+                for (int x = 0; x < map.GetLength(1); x++)
+                {
+                    if (map[y, x] == true)
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkGreen;
+                        Console.Write("#");
+                    }
+                    else if (map[y, x] == false)
+                    {
+                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.Write(".");
+                    }
+                }
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.WriteLine();
             }
         }
+
+    static void JoelLovesToBurn()
+    {
+
     }
+
+    static void MovePlayer(ConsoleKey key, Player player)
+    {
+        switch (key)
+        {
+            case ConsoleKey.UpArrow:
+                if (player.YPosition > 0)
+                    player.YPosition--;
+                break;
+
+            case ConsoleKey.RightArrow:
+                if (player.XPosition < Map.WIDTH - 1)
+                    player.XPosition++;
+                break;
+
+            case ConsoleKey.DownArrow:
+                if (player.YPosition < Map.HEIGHT - 1)
+                    player.YPosition++;
+                break;
+
+            case ConsoleKey.LeftArrow:
+                if (player.XPosition > 0)
+                    player.XPosition--;
+                break;
+        }
+    }
+}
 }
