@@ -15,7 +15,7 @@ namespace ATeamRPG
 
         static void Poo()
         {
-
+            Console.WriteLine("Oj, här luktade det illa!");
         }
     }
 }
