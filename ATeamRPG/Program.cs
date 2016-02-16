@@ -13,11 +13,12 @@ namespace ATeamRPG {
             var playerOne = new Player(nameOne);
             Console.WriteLine("Input the name of Player 2: ");
             var nameTwo = Console.ReadLine();
+            Console.CursorVisible = false;
             var playerTwo = new Player(nameTwo);
             Map map = new Map();
             map.PlaceGold();
-            map.Draw();
             map.SpawnPlayers(playerOne, playerTwo);
+            map.Draw();
             do {
                 ConsoleKey key = Console.ReadKey().Key;
                 Console.BackgroundColor = ConsoleColor.Black;
