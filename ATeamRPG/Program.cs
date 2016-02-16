@@ -11,8 +11,12 @@ namespace ATeamRPG
         
         public static void Main(string[] args)
         {
-            var playerOne = new Player("Olle");
-            var playerTwo = new Player("Pelle");
+            Console.WriteLine("Input the name of Player 1: ");
+            var nameOne = Console.ReadLine();
+            var playerOne = new Player(nameOne);
+            Console.WriteLine("Input the name of Player 2: ");
+            var nameTwo = Console.ReadLine();
+            var playerTwo = new Player(nameTwo);
             var map = new Map();
         }
     }
