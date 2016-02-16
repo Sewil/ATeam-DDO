@@ -11,21 +11,20 @@ namespace ATeamRPG
         //Working????
         static void Main(string[] args)
         {
-            Console.WriteLine("A Team");
+
+            Player playerOne = new Player("Olle");
+            Player playerTwo = new Player("Kalle");
+            Map map = new Map();
             ConsoleKey key = Console.ReadKey().Key;
-            MovePlayer(key);
+            MovePlayer(key, playerOne);
         }
-
-        public static void Main(string[] args)
-        {
-
-        }
+        
         static void JoelLovesToBurn()
         {
 
         }
 
-        static void MovePlayer(ConsoleKey key)
+        static void MovePlayer(ConsoleKey key, Player player)
         {
             switch(key)
             {
@@ -35,12 +34,12 @@ namespace ATeamRPG
                     break;
 
                 case ConsoleKey.RightArrow:
-                    if (player.XPosition < )
-                        player.XPosition;
+                    if (player.XPosition < Map.WIDTH - 1)
+                        player.XPosition++;
                     break;
 
                 case ConsoleKey.DownArrow:
-                    if (player.YPosition < )
+                    if (player.YPosition < Map.HEIGHT - 1)
                         player.YPosition++;
                     break;
 

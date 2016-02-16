@@ -16,8 +16,8 @@ namespace ATeamRPG {
         }
     }
     class Map {
-        const int WIDTH = 10;
-        const int HEIGHT = 10;
+        public const int WIDTH = 10;
+        public const int HEIGHT = 10;
         public Cell[,] Cells = new Cell[HEIGHT, WIDTH];
 
         public Map() {
