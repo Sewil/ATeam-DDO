@@ -8,24 +8,38 @@ namespace ATeamRPG
 {
     class MapFactory
     {
-        static int chanceToStartAlive = 50;
-        static Random rand = new Random();
-
-        static bool[,] InitializeMap(bool[,] map)
-        {
-            for (int y = 0; y < 20; y++)
-            {
-                for (int x = 0; x < 75; x++)
-                {
-                    if (rand.Next(1, 101) < chanceToStartAlive)
-                    {
-                        map[y, x] = true;
+        static double chanceToStartAlive = 0.5;
+        public const int WIDTH = 75;
+        public const int HEIGHT = 20;
+        public bool[,] Map = new bool[20, 75];
+        public MapFactory() {
+            var random = new Random();
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int x = 0; x < WIDTH; x++) {
+                    if (random.NextDouble() <= chanceToStartAlive) {
+                        Map[y, x] = true;
                     }
                 }
             }
-            return map;
+            for (int i = 0; i < random.Next(1, 4); i++) {
+                Map = DoSimulationStep(Map);
+            }
         }
-
+        void Draw() {
+            for (int y = 0; y < Map.GetLength(0); y++) {
+                for (int x = 0; x < Map.GetLength(1); x++) {
+                    if (Map[y, x] == true) {
+                        Console.ForegroundColor = ConsoleColor.DarkGreen;
+                        Console.Write("#");
+                    } else if (Map[y, x] == false) {
+                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.Write(".");
+                    }
+                }
+                Console.ForegroundColor = ConsoleColor.Gray;
+                Console.WriteLine();
+            }
+        }
         static bool[,] DoSimulationStep(bool[,] oldMap)
         {
             bool[,] newMap = new bool[20, 75];
@@ -70,16 +84,6 @@ namespace ATeamRPG
                 }
             }
             return count;
-        }
-
-        public static bool[,] GenerateMap()
-        {
-            bool[,] cellmap = new bool[20, 75];
-            cellmap = InitializeMap(cellmap);
-            for (int i = 0; i < rand.Next(1, 4); i++)
-                cellmap = DoSimulationStep(cellmap);
-
-            return cellmap;
         }
     }
 }

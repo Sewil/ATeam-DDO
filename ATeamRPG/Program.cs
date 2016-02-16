@@ -6,8 +6,6 @@ using System.Threading.Tasks;
 
 namespace ATeamRPG {
     class Program {
-        static bool[,] map;
-
         static void Main(string[] args) {
 
             Console.WriteLine("Input the name of Player 1: ");
@@ -24,27 +22,6 @@ namespace ATeamRPG {
                 ConsoleKey key = Console.ReadKey().Key;
             } while (true);
         }
-
-        static void CreateMap() {
-            map = MapFactory.GenerateMap();
-        }
-
-        static void DrawMap() {
-            for (int y = 0; y < map.GetLength(0); y++) {
-                for (int x = 0; x < map.GetLength(1); x++) {
-                    if (map[y, x] == true) {
-                        Console.ForegroundColor = ConsoleColor.DarkGreen;
-                        Console.Write("#");
-                    } else if (map[y, x] == false) {
-                        Console.ForegroundColor = ConsoleColor.White;
-                        Console.Write(".");
-                    }
-                }
-                Console.ForegroundColor = ConsoleColor.Gray;
-                Console.WriteLine();
-            }
-        }
-
         static void MovePlayer(ConsoleKey key, Map map, Player player) {
             switch (key) {
                 case ConsoleKey.UpArrow:
