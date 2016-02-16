@@ -12,24 +12,24 @@ namespace ATeamRPG {
             Damage = 5;
         }
         public string Name { get; set; }
-        public Cell Cell { get; set; }
-        public int X {
+        int health;
+        public int Health {
             get {
-                return Cell.X;
+                return health;
+            }
+            set {
+                health = value;
+                if(health <= 0) {
+                    OnDied(this);
+                }
             }
         }
-        public int Y {
-            get {
-                return Cell.Y;
-            }
-        }
-        public int Health { get; set; }
         public int Gold { get; set; }
         public int Damage { get; set; }
 
-        public void OnDied(Cell c) {
-            c.Gold += Gold;
-            Gold = 0;
+        public event Action<Player> Died;
+        public void OnDied(Player player) {
+            Died?.Invoke(player);
         }
     }
 }
