@@ -20,6 +20,9 @@ namespace ATeamRPG {
             map.SpawnPlayers(playerOne, playerTwo);
             do {
                 ConsoleKey key = Console.ReadKey().Key;
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.Clear();
+                map.Draw();
             } while (true);
         }
         static void MovePlayer(ConsoleKey key, Map map, Player player) {
