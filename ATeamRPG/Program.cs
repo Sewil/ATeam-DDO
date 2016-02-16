@@ -17,5 +17,9 @@ namespace ATeamRPG
         {
 
         }
+        static void JoelLovesToBurn()
+        {
+
+        }
     }
 }
