@@ -8,10 +8,11 @@ namespace ATeamRPG
 {
     class Program
     {
-        //Working????
-        static void Main(string[] args)
+        
+        public static void Main(string[] args)
         {
             Console.WriteLine("A Team");
+            string Name = Console.ReadLine();
         }
 
         static void Poo()
