@@ -8,6 +8,12 @@ namespace ATeamRPG
 {
     class Player
     {
+        public Player(string name)
+        {
+            Name = name;
+            Health = 20;
+            Damage = 5;
+        }
         public string Name { get; set; }
         public int XPosition { get; set; }
         public int YPosition { get; set; }
