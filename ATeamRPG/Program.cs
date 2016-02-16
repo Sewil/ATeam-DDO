@@ -11,6 +11,7 @@ namespace ATeamRPG
         //Working????
         static void Main(string[] args)
         {
+            Console.WriteLine("A Team");
         }
 
         static void Poo()
