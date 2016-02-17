@@ -9,7 +9,7 @@ namespace ATeamRPG {
         public const int HEALTH = 20;
         public const int DAMAGE = 5;
         public Player() {
-            Color = ConsoleColor.Green;
+            Color = ConsoleColor.Red;
             Health = HEALTH;
             Damage = DAMAGE;
         }

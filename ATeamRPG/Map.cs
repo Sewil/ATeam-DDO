@@ -1,57 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
 namespace ATeamRPG {
-    class Cell {
-        Player player;
-        public Player Player {
-            get {
-                return player;
-            }
-            set {
-                if (value != null) {
-                    player = value;
-                    player.Died += Player_Died;
-                } else {
-                    player.Died -= Player_Died;
-                    player = value;
-                }
-            }
-        }
-        public void Player_Died(Player p) {
-            Gold += p.Gold;
-            p.Gold = 0;
-            Player = null;
-        }
-        public bool HasPlayer {
-            get {
-                return Player != null;
-            }
-        }
-        public bool IsEmpty {
-            get {
-                return !HasGold && !HasPlayer;
-            }
-        }
-        public bool HasGold {
-            get {
-                return Gold > 0;
-            }
-        }
-        public int Gold { get; set; }
-        public int Y { get; set; }
-        public int X { get; set; }
-        public Cell(int y, int x) {
-            Gold = 0;
-            Y = y;
-            X = x;
-        }
-    }
+
     class Map {
-        const int GOLD_ROUND_TURNS = 20;
+        const int GOLD_ROUND_TURNS = 50;
         int turn;
         public int Turn {
             get {
@@ -59,21 +11,29 @@ namespace ATeamRPG {
             }
             set {
                 turn = value;
-                if(turn % GOLD_ROUND_TURNS == 0) {
+                if (turn % GOLD_ROUND_TURNS == 0) {
                     OnGoldRound(this);
                 }
             }
         }
         public Player[] players;
-        public const int WIDTH = 10;
-        public const int HEIGHT = 10;
+        public const int WIDTH = 75;
+        public const int HEIGHT = 20;
         public Cell[,] Cells = new Cell[HEIGHT, WIDTH];
-
+        double chanceToStartAlive = 0.5;
         private Map() {
+            var random = new Random();
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
-                    Cells[y, x] = new Cell(y, x);
+                    if (random.NextDouble() <= chanceToStartAlive) {
+                        Cells[y, x] = new Cell(y, x, CellType.Forest);
+                    } else {
+                        Cells[y, x] = new Cell(y, x, CellType.Ground);
+                    }
                 }
+            }
+            for (int i = 0; i < random.Next(1, 4); i++) {
+                Cells = DoSimulationStep();
             }
         }
         public event Action<Map> GoldRound;
@@ -97,24 +57,65 @@ namespace ATeamRPG {
             map.SpawnPlayers(players);
             return map;
         }
+        int CountAliveNeighbours(int y, int x) {
+            int count = 0;
+            for (int i = -1; i < 2; i++) {
+                for (int j = -1; j < 2; j++) {
+                    int neighborY = y + i;
+                    int neighborX = x + j;
+
+                    if (i == 0 && j == 0) {
+                    } else if (
+                        (
+                            neighborY < 0
+                            || neighborX < 0
+                            || neighborY >= HEIGHT
+                            || neighborX >= WIDTH
+                        )
+                        || Cells[neighborY, neighborX].CellType == CellType.Forest
+                    ) {
+                        count++;
+                    }
+                }
+            }
+            return count;
+        }
+        Cell[,] DoSimulationStep() {
+            var newCells = new Cell[HEIGHT, WIDTH];
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int x = 0; x < WIDTH; x++) {
+                    int neighbours = CountAliveNeighbours(y, x);
+
+                    if (neighbours <= 4) {
+                        newCells[y, x] = new Cell(y, x, CellType.Ground);
+                    } else if (neighbours > 4) {
+                        newCells[y, x] = new Cell(y, x, CellType.Forest);
+                    }
+                }
+            }
+            return newCells;
+        }
         public void Draw() {
             Console.ForegroundColor = ConsoleColor.White;
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
                     var cell = Cells[y, x];
-                    Console.BackgroundColor = ConsoleColor.DarkGray;
                     if (cell.HasGold) {
-                        Console.BackgroundColor = ConsoleColor.Yellow;
-                        Console.Write(" ");
+                        Console.ForegroundColor = ConsoleColor.Yellow;
+                        Console.Write("$");
                     } else if (cell.HasPlayer) {
                         if (cell.Player.IsActive) {
                             Console.ForegroundColor = cell.Player.Color;
                         } else {
                             Console.ForegroundColor = ConsoleColor.Gray;
                         }
-                        Console.Write("P");
-                    } else {
-                        Console.Write(" ");
+                        Console.Write("@");
+                    } else if (cell.CellType == CellType.Forest) {
+                        Console.ForegroundColor = ConsoleColor.DarkGreen;
+                        Console.Write("#");
+                    } else if (cell.CellType == CellType.Ground) {
+                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.Write(".");
                     }
 
                     Console.BackgroundColor = ConsoleColor.Black;
@@ -136,7 +137,7 @@ namespace ATeamRPG {
         public void PlaceGold() {
             var random = new Random();
             foreach (var cell in Cells) {
-                if (random.NextDouble() <= goldChance && !cell.HasPlayer) {
+                if (cell.Goldable && random.NextDouble() <= goldChance) {
                     cell.Gold += random.Next(goldRange[0], goldRange[1] + 1);
                 }
             }
@@ -147,11 +148,11 @@ namespace ATeamRPG {
             foreach (var player in players) {
                 List<Cell> emptyCells = new List<Cell>();
                 foreach (var cell in Cells) {
-                    if (cell.IsEmpty) {
+                    if (cell.Spawnable) {
                         emptyCells.Add(cell);
                     }
                 }
-                var randomCell = emptyCells[random.Next(0, emptyCells.Count())];
+                var randomCell = emptyCells[random.Next(0, emptyCells.Count)];
                 randomCell.Player = player;
             }
         }
@@ -196,7 +197,7 @@ namespace ATeamRPG {
                 Turn++;
                 if (newCell.HasPlayer) {
                     newCell.Player.Health -= currentCell.Player.Damage;
-                } else {
+                } else if(newCell.Walkable) {
                     newCell.Player = currentCell.Player;
                     currentCell.Player = null;
 
