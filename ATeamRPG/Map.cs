@@ -51,7 +51,7 @@ namespace ATeamRPG {
         }
     }
     class Map {
-        
+        const int GOLD_ROUND_TURNS = 20;
         int turn;
         public int Turn {
             get {
@@ -59,7 +59,7 @@ namespace ATeamRPG {
             }
             set {
                 turn = value;
-                if(turn.ToString().EndsWith("0")) {
+                if(turn % GOLD_ROUND_TURNS == 0) {
                     OnGoldRound(this);
                 }
             }
@@ -90,6 +90,7 @@ namespace ATeamRPG {
             foreach (var player in map.players) {
                 player.Died += (p) => {
                     map.SpawnPlayers(p); // respawn on death
+                    p.Health = Player.HEALTH;
                 };
             }
             map.PlaceGold();
@@ -106,7 +107,11 @@ namespace ATeamRPG {
                         Console.BackgroundColor = ConsoleColor.Yellow;
                         Console.Write(" ");
                     } else if (cell.HasPlayer) {
-                        Console.ForegroundColor = cell.Player.Color;
+                        if (cell.Player.IsActive) {
+                            Console.ForegroundColor = cell.Player.Color;
+                        } else {
+                            Console.ForegroundColor = ConsoleColor.Gray;
+                        }
                         Console.Write("P");
                     } else {
                         Console.Write(" ");
@@ -131,7 +136,7 @@ namespace ATeamRPG {
         public void PlaceGold() {
             var random = new Random();
             foreach (var cell in Cells) {
-                if (random.NextDouble() <= goldChance) {
+                if (random.NextDouble() <= goldChance && !cell.HasPlayer) {
                     cell.Gold += random.Next(goldRange[0], goldRange[1] + 1);
                 }
             }
@@ -188,16 +193,17 @@ namespace ATeamRPG {
             }
 
             if (newCell != null) {
+                Turn++;
                 if (newCell.HasPlayer) {
                     newCell.Player.Health -= currentCell.Player.Damage;
                 } else {
                     newCell.Player = currentCell.Player;
                     currentCell.Player = null;
-                }
 
-                if (newCell.HasGold) {
-                    newCell.Player.Gold += newCell.Gold;
-                    newCell.Gold = 0;
+                    if (newCell.HasGold) {
+                        newCell.Player.Gold += newCell.Gold;
+                        newCell.Gold = 0;
+                    }
                 }
             }
         }
