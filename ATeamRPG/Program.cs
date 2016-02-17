@@ -16,17 +16,16 @@ namespace ATeamRPG {
 
             Console.CursorVisible = false;
             Map map = Map.Load(playerOne, playerTwo);
-            int turns = 0;
             do {
                 map.Draw();
                 ConsoleKey key = Console.ReadKey().Key;
                 Console.Clear();
-                if (turns % 2 == 0) {
+                if (map.Turn % 2 == 0) {
                     map.MovePlayer(key, playerOne);
                 } else {
                     map.MovePlayer(key, playerTwo);
                 }
-                turns++;
+                map.Turn++;
             } while (true);
         }
     }

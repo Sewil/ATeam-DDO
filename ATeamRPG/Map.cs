@@ -51,6 +51,19 @@ namespace ATeamRPG {
         }
     }
     class Map {
+        
+        int turn;
+        public int Turn {
+            get {
+                return turn;
+            }
+            set {
+                turn = value;
+                if(turn.ToString().EndsWith("0")) {
+                    OnGoldRound(this);
+                }
+            }
+        }
         public Player[] players;
         public const int WIDTH = 10;
         public const int HEIGHT = 10;
@@ -63,9 +76,16 @@ namespace ATeamRPG {
                 }
             }
         }
+        public event Action<Map> GoldRound;
+        public void OnGoldRound(Map m) {
+            GoldRound?.Invoke(m);
+        }
         public static Map Load(params Player[] players) {
             var map = new Map {
                 players = players
+            };
+            map.GoldRound += (m) => {
+                m.PlaceGold();
             };
             foreach (var player in map.players) {
                 player.Died += (p) => {
@@ -99,6 +119,7 @@ namespace ATeamRPG {
             }
 
             Console.WriteLine();
+            Console.WriteLine($"Turn: {Turn}");
             for (int i = 0; i < players.Length; i++) {
                 var player = players[i];
                 Console.WriteLine($"Player {i + 1} gold: {player.Gold}, health: {player.Health}");
