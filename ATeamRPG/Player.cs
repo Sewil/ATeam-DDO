@@ -6,22 +6,19 @@ using System.Threading.Tasks;
 
 namespace ATeamRPG {
     class Player {
-        public Player(string name) {
-            Name = name;
+        public Player() {
             Health = 20;
             Damage = 5;
-         }
-        public Cell PlayerPosition { get; set; }
-        public string Name { get; set; }
+        }
         int health;
-        public ConsoleColor Colour { get; set; }
+        public ConsoleColor Color { get; set; }
         public int Health {
             get {
                 return health;
             }
             set {
                 health = value;
-                if(health <= 0) {
+                if (health <= 0) {
                     OnDied(this);
                 }
             }
@@ -31,6 +28,7 @@ namespace ATeamRPG {
 
         public event Action<Player> Died;
         public void OnDied(Player player) {
+            player.Health = 20;
             Died?.Invoke(player);
         }
     }

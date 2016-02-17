@@ -17,6 +17,7 @@ namespace ATeamRPG {
                     player.Died += Player_Died;
                 } else {
                     player.Died -= Player_Died;
+                    player = value;
                 }
             }
         }
@@ -50,44 +51,67 @@ namespace ATeamRPG {
         }
     }
     class Map {
+        public Player[] players;
         public const int WIDTH = 10;
         public const int HEIGHT = 10;
         public Cell[,] Cells = new Cell[HEIGHT, WIDTH];
 
-        public Map() {
+        private Map() {
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
                     Cells[y, x] = new Cell(y, x);
                 }
             }
         }
+        public static Map Load(params Player[] players) {
+            var map = new Map {
+                players = players
+            };
+            foreach (var player in map.players) {
+                player.Died += (p) => {
+                    map.SpawnPlayers(p); // respawn on death
+                };
+            }
+            map.PlaceGold();
+            map.SpawnPlayers(players);
+            return map;
+        }
         public void Draw() {
             Console.ForegroundColor = ConsoleColor.White;
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
                     var cell = Cells[y, x];
+                    Console.BackgroundColor = ConsoleColor.DarkGray;
                     if (cell.HasGold) {
                         Console.BackgroundColor = ConsoleColor.Yellow;
                         Console.Write(" ");
                     } else if (cell.HasPlayer) {
-                        Console.ForegroundColor = cell.Player.Colour;
+                        Console.ForegroundColor = cell.Player.Color;
                         Console.Write("P");
                     } else {
-                        Console.BackgroundColor = ConsoleColor.DarkGray;
                         Console.Write(" ");
                     }
+
+                    Console.BackgroundColor = ConsoleColor.Black;
+                    Console.ForegroundColor = ConsoleColor.White;
                 }
                 Console.WriteLine();
             }
+
+            Console.WriteLine();
+            for (int i = 0; i < players.Length; i++) {
+                var player = players[i];
+                Console.WriteLine($"Player {i + 1} gold: {player.Gold}, health: {player.Health}");
+            }
         }
+
+        double goldChance = 0.1;
+        int[] goldRange = { 100, 1000 };
         public void PlaceGold() {
             var random = new Random();
-            for (int y = 0; y < HEIGHT; y++) {
-                for (int x = 0; x < WIDTH; x++) {
-                    var cell = Cells[y, x];
-                    if (random.NextDouble() <= 0.1) {
-                        cell.Gold += random.Next(100, 1001);
-                    }
+            foreach (var cell in Cells) {
+                if (random.NextDouble() <= goldChance) {
+                    cell.Gold += random.Next(goldRange[0], goldRange[1] + 1);
                 }
             }
         }
@@ -95,49 +119,65 @@ namespace ATeamRPG {
         public void SpawnPlayers(params Player[] players) {
             var random = new Random();
             foreach (var player in players) {
-                var emptyCells = Cells.Cast<Cell>().Where(c => c.IsEmpty).ToList();
+                List<Cell> emptyCells = new List<Cell>();
+                foreach (var cell in Cells) {
+                    if (cell.IsEmpty) {
+                        emptyCells.Add(cell);
+                    }
+                }
                 var randomCell = emptyCells[random.Next(0, emptyCells.Count())];
                 randomCell.Player = player;
-                player.PlayerPosition = randomCell;
             }
         }
+        Cell FindPlayer(Player player) {
+            foreach (var cell in Cells) {
+                if (cell.Player == player) {
+                    return cell;
+                }
+            }
+
+            return null;
+        }
         public void MovePlayer(ConsoleKey key, Player player) {
-            var currentCell = player.PlayerPosition;
+            var currentCell = FindPlayer(player);
             Cell newCell = null;
-            var playerPosition = player.PlayerPosition;
             switch (key) {
                 case ConsoleKey.UpArrow:
-                    if (playerPosition.Y > 0) {
-                        newCell = Cells[playerPosition.Y - 1, playerPosition.X];
-                        currentCell.Player = null;
+                    if (currentCell.Y > 0) {
+                        newCell = Cells[currentCell.Y - 1, currentCell.X];
                     }
                     break;
                 case ConsoleKey.RightArrow:
-                    if (playerPosition.X < WIDTH - 1) {
-                        newCell = Cells[playerPosition.Y, playerPosition.X + 1];
-                        currentCell.Player = null;
+                    if (currentCell.X < WIDTH - 1) {
+                        newCell = Cells[currentCell.Y, currentCell.X + 1];
                     }
                     break;
 
                 case ConsoleKey.DownArrow:
-                    if (playerPosition.Y < HEIGHT - 1) {
-                        newCell = Cells[playerPosition.Y + 1, playerPosition.X];
-                        currentCell.Player = null;
+                    if (currentCell.Y < HEIGHT - 1) {
+                        newCell = Cells[currentCell.Y + 1, currentCell.X];
                     }
                     break;
 
                 case ConsoleKey.LeftArrow:
-                    if (playerPosition.X > 0) {
-                        newCell = Cells[playerPosition.Y, playerPosition.X - 1];
-                        currentCell.Player = null;
+                    if (currentCell.X > 0) {
+                        newCell = Cells[currentCell.Y, currentCell.X - 1];
                     }
                     break;
             }
-            if (newCell.HasPlayer) {
-                newCell.Player.Health -= playerPosition.Player.Damage;
-            } else {
-                newCell.Player = playerPosition.Player;
-                playerPosition.Player = null;
+
+            if (newCell != null) {
+                if (newCell.HasPlayer) {
+                    newCell.Player.Health -= currentCell.Player.Damage;
+                } else {
+                    newCell.Player = currentCell.Player;
+                    currentCell.Player = null;
+                }
+
+                if (newCell.HasGold) {
+                    newCell.Player.Gold += newCell.Gold;
+                    newCell.Gold = 0;
+                }
             }
         }
     }
