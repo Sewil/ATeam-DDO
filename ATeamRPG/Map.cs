@@ -20,12 +20,12 @@ namespace ATeamRPG {
         public const int WIDTH = 75;
         public const int HEIGHT = 20;
         public Cell[,] Cells = new Cell[HEIGHT, WIDTH];
-        double chanceToStartAlive = 0.5;
+        const double FOREST_CHANCE = 0.5;
         private Map() {
             var random = new Random();
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
-                    if (random.NextDouble() <= chanceToStartAlive) {
+                    if (random.NextDouble() <= FOREST_CHANCE) {
                         Cells[y, x] = new Cell(y, x, CellType.Forest);
                     } else {
                         Cells[y, x] = new Cell(y, x, CellType.Ground);
@@ -57,39 +57,34 @@ namespace ATeamRPG {
             map.SpawnPlayers(players);
             return map;
         }
-        int CountAliveNeighbours(int y, int x) {
-            int count = 0;
-            for (int i = -1; i < 2; i++) {
-                for (int j = -1; j < 2; j++) {
-                    int neighborY = y + i;
-                    int neighborX = x + j;
+        int CountForestNeighbors(int y, int x) {
+            int neighbors = 0;
+            for (int i = -1; i <= 1; i++) {
+                for (int j = -1; j <= 1; j++) {
+                    int neighborY = i + y;
+                    int neighborX = j + x;
+                    bool selfCell = i == 0 && j == 0;
+                    bool outsideCell = neighborY < 0 || neighborX < 0 || neighborY >= HEIGHT || neighborX >= WIDTH;
 
-                    if (i == 0 && j == 0) {
-                    } else if (
-                        (
-                            neighborY < 0
-                            || neighborX < 0
-                            || neighborY >= HEIGHT
-                            || neighborX >= WIDTH
-                        )
-                        || Cells[neighborY, neighborX].CellType == CellType.Forest
-                    ) {
-                        count++;
+                    if (!selfCell && (outsideCell || Cells[neighborY, neighborX].CellType == CellType.Forest)) {
+                        neighbors++;
                     }
                 }
             }
-            return count;
+
+            return neighbors;
         }
         Cell[,] DoSimulationStep() {
             var newCells = new Cell[HEIGHT, WIDTH];
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
-                    int neighbours = CountAliveNeighbours(y, x);
+                    int neighbours = CountForestNeighbors(y, x);
+                    bool borderCell = y == 0 || y == HEIGHT - 1 || x == 0 || x == WIDTH - 1;
 
-                    if (neighbours <= 4) {
-                        newCells[y, x] = new Cell(y, x, CellType.Ground);
-                    } else if (neighbours > 4) {
+                    if (borderCell || neighbours > 4) {
                         newCells[y, x] = new Cell(y, x, CellType.Forest);
+                    } else if (neighbours <= 4) {
+                        newCells[y, x] = new Cell(y, x, CellType.Ground);
                     }
                 }
             }
@@ -152,8 +147,12 @@ namespace ATeamRPG {
                         emptyCells.Add(cell);
                     }
                 }
-                var randomCell = emptyCells[random.Next(0, emptyCells.Count)];
-                randomCell.Player = player;
+                if (emptyCells.Count > 0) {
+                    var randomCell = emptyCells[random.Next(0, emptyCells.Count)];
+                    randomCell.Player = player;
+                } else {
+                    throw new Exception("Error spawning player. No free cells.");
+                }
             }
         }
         Cell FindPlayer(Player player) {
@@ -197,7 +196,7 @@ namespace ATeamRPG {
                 Turn++;
                 if (newCell.HasPlayer) {
                     newCell.Player.Health -= currentCell.Player.Damage;
-                } else if(newCell.Walkable) {
+                } else if (newCell.Walkable) {
                     newCell.Player = currentCell.Player;
                     currentCell.Player = null;
 
