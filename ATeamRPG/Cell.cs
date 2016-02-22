@@ -50,6 +50,7 @@
                 return Player != null;
             }
         }
+        public bool HasMonster { get { return Monster != null; } }
         public bool Walkable {
             get {
                 return CellType == CellType.Ground && !HasPlayer;

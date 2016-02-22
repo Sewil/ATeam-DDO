@@ -23,6 +23,7 @@ namespace ATeamRPG {
                     playerOne.IsActive = true;
                     playerTwo.IsActive = false;
                 }
+                map.SpawnMonster();
                 map.Draw();
             } while (true);
         }

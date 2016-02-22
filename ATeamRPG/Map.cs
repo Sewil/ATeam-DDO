@@ -3,10 +3,13 @@ using System.Collections.Generic;
 namespace ATeamRPG {
 
     class Map {
+        long spawnedTime;
         const int GOLD_ROUND_TURNS = 50;
         const int MONSTER_SPAWN_TURNS = 5;
+        public const int MAXSPAWNEDMONSTERS = 10;
         int turn;
         public int monsterCount;
+        public int SpawnedMonsters { get; set; }
         public int Turn {
             get {
                 return turn;
@@ -60,7 +63,7 @@ namespace ATeamRPG {
             map.MonsterSpawn += (m) =>
             {
                 m.SpawnMonsters();
-            }
+            };
             map.GoldRound += (m) => {
                 m.PlaceGold();
             };
@@ -122,6 +125,9 @@ namespace ATeamRPG {
                             Console.ForegroundColor = ConsoleColor.Gray;
                         }
                         Console.Write("@");
+                    } else if (cell.HasMonster) {
+                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        Console.Write("M");
                     } else if (cell.CellType == CellType.Forest) {
                         Console.ForegroundColor = ConsoleColor.DarkGreen;
                         Console.Write("#");
@@ -172,6 +178,27 @@ namespace ATeamRPG {
                 }
             }
         }
+
+        public void SpawnMonster()
+        {
+            // Place in infinite loop if we want to thread it in background
+            if (DateTime.Now.Ticks > spawnedTime)
+            {
+                var random = new Random();
+
+                var availableCells = new List<Cell>();
+                foreach (var cell in Cells)
+                {
+                    if (cell.Spawnable && SpawnedMonsters < MAXSPAWNEDMONSTERS)
+                        availableCells.Add(cell);
+                }
+                var randomCell = availableCells[random.Next(0, availableCells.Count)];
+                randomCell.Monster = new Monster();
+                SpawnedMonsters += 1;
+                spawnedTime = DateTime.Now.Ticks + 50000000;
+            }
+        }
+
         public void SpawnMonsters(params Monster[] monsters)
         {
             var random = new Random();
