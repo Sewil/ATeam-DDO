@@ -3,6 +3,7 @@
         public CellType CellType { get; set; }
         Player player;
         Monster monster;
+        Map map;
         public Monster Monster
         {   get { return monster; }
             set
@@ -42,6 +43,7 @@
         {
             Gold += m.Gold;
             Monster = null;
+            map.monsterCount--;
         }
         public bool HasPlayer {
             get {

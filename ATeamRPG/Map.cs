@@ -4,7 +4,9 @@ namespace ATeamRPG {
 
     class Map {
         const int GOLD_ROUND_TURNS = 50;
+        const int MONSTER_SPAWN_TURNS = 5;
         int turn;
+        public int monsterCount;
         public int Turn {
             get {
                 return turn;
@@ -13,6 +15,11 @@ namespace ATeamRPG {
                 turn = value;
                 if (turn % GOLD_ROUND_TURNS == 0) {
                     OnGoldRound(this);
+                }
+                if(turn%MONSTER_SPAWN_TURNS==0&&monsterCount>=10)
+                {
+                    OnMonsterSpawn(this);
+                    monsterCount++;
                 }
             }
         }
@@ -37,13 +44,23 @@ namespace ATeamRPG {
             }
         }
         public event Action<Map> GoldRound;
+        public event Action<Map> MonsterSpawn;
         public void OnGoldRound(Map m) {
             GoldRound?.Invoke(m);
+        }
+        public void OnMonsterSpawn(Map m)
+        {
+            MonsterSpawn?.Invoke(m);
         }
         public static Map Load(params Player[] players) {
             var map = new Map {
                 players = players
             };
+            var monsters = new Monster();
+            map.MonsterSpawn += (m) =>
+            {
+                m.SpawnMonsters();
+            }
             map.GoldRound += (m) => {
                 m.PlaceGold();
             };
@@ -154,6 +171,14 @@ namespace ATeamRPG {
                     throw new Exception("Error spawning player. No free cells.");
                 }
             }
+        }
+        public void SpawnMonsters(params Monster[] monsters)
+        {
+            var random = new Random();
+            foreach(var monster in monsters)
+            {
+
+            } 
         }
         Cell FindPlayer(Player player) {
             foreach (var cell in Cells) {
