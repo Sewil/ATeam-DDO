@@ -275,6 +275,9 @@ namespace ATeamRPG {
                 if (newCell.HasPlayer) {
                     newCell.Player.Health -= currentCell.Player.Damage;
                 }
+                else if (newCell.HasMonster) {
+                    newCell.Monster.Health -= currentCell.Player.Damage;
+                }
                 else if (newCell.Walkable) {
                     newCell.Player = currentCell.Player;
                     currentCell.Player = null;
