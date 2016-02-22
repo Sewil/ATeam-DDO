@@ -204,21 +204,22 @@ namespace ATeamRPG {
                 spawnTimeHealthPotion = DateTime.Now.Ticks + 50000000;
             }
         }
+
         public void SpawnMonster()
         {
             // Place in infinite loop if we want to thread it in background
             if (DateTime.Now.Ticks > spawnTimeMonster)
             {
-                var random = new Random();
+                var rnd = new Random();
 
-                var availableCells = new List<Cell>();
+                var emptyCells = new List<Cell>();
                 foreach (var cell in Cells)
                 {
                     if (cell.Spawnable && SpawnedMonsters < MAXSPAWNEDMONSTERS)
-                        availableCells.Add(cell);
+                        emptyCells.Add(cell);
                 }
-                var randomCell = availableCells[random.Next(0, availableCells.Count)];
-                randomCell.Monster = new Monster();
+                var rndCell = emptyCells[rnd.Next(0, emptyCells.Count)];
+                rndCell.Monster = new Monster();
                 SpawnedMonsters += 1;
                 spawnTimeMonster = DateTime.Now.Ticks + 50000000;
             }
@@ -273,7 +274,8 @@ namespace ATeamRPG {
                 Turn++;
                 if (newCell.HasPlayer) {
                     newCell.Player.Health -= currentCell.Player.Damage;
-                } else if (newCell.Walkable) {
+                }
+                else if (newCell.Walkable) {
                     newCell.Player = currentCell.Player;
                     currentCell.Player = null;
 
@@ -281,8 +283,10 @@ namespace ATeamRPG {
                         newCell.Player.Gold += newCell.Gold;
                         newCell.Gold = 0;
                     } else if (newCell.HasHealthPotion) {
-                        if (newCell.Player.Health < 20)
+                        if (newCell.Player.Health < 20) {
                             newCell.Player.Health += newCell.HealthPotion.Health;
+                            newCell.HealthPotion = null;
+                        }
                     }
                 }
             }

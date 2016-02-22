@@ -12,6 +12,7 @@ namespace ATeamRPG {
             playerTwo.IsActive = false;
             map.Draw();
             do {
+                map.SpawnMonster(); // Bg-thread?
                 ConsoleKey key = Console.ReadKey().Key;
                 Console.Clear();
                 if (map.Turn % 2 == 0) {
@@ -23,7 +24,6 @@ namespace ATeamRPG {
                     playerOne.IsActive = true;
                     playerTwo.IsActive = false;
                 }
-                map.SpawnMonster(); // Bg-thread?
                 map.SpawnHealthPotion(); // Bg-thread?
                 map.Draw();
             } while (true);
