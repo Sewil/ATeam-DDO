@@ -12,7 +12,7 @@ namespace ATeamRPG
         public const int DAMAGE = 2;
         public Monster()
         {
-            Color = ConsoleColor.Blue;
+            Color = ConsoleColor.DarkRed;
             Health = HEALTH;
             Damage = DAMAGE;
         }

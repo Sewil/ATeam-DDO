@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="Cell.cs" />
     <Compile Include="Enums.cs" />
+    <Compile Include="HealthPotion.cs" />
     <Compile Include="Map.cs" />
     <Compile Include="MapFactory.cs" />
     <Compile Include="Monster.cs" />

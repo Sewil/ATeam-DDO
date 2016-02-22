@@ -3,13 +3,16 @@ using System.Collections.Generic;
 namespace ATeamRPG {
 
     class Map {
-        long spawnedTime;
+        long spawnTimeMonster;
+        long spawnTimeHealthPotion;
         const int GOLD_ROUND_TURNS = 50;
         const int MONSTER_SPAWN_TURNS = 5;
         public const int MAXSPAWNEDMONSTERS = 10;
+        public const int MAXSPAWNEDHEALTHPOTIONS = 10;
         int turn;
         public int monsterCount;
         public int SpawnedMonsters { get; set; }
+        public int SpawnedHealthPotions { get; set; }
         public int Turn {
             get {
                 return turn;
@@ -125,8 +128,11 @@ namespace ATeamRPG {
                             Console.ForegroundColor = ConsoleColor.Gray;
                         }
                         Console.Write("@");
+                    } else if (cell.HasHealthPotion) {
+                        Console.ForegroundColor = cell.HealthPotion.Color;
+                        Console.Write("P");
                     } else if (cell.HasMonster) {
-                        Console.ForegroundColor = ConsoleColor.DarkRed;
+                        Console.ForegroundColor = cell.Monster.Color;
                         Console.Write("M");
                     } else if (cell.CellType == CellType.Forest) {
                         Console.ForegroundColor = ConsoleColor.DarkGreen;
@@ -179,10 +185,29 @@ namespace ATeamRPG {
             }
         }
 
+        public void SpawnHealthPotion()
+        {
+            // Place in infinite loop if we want to thread it in background
+            if (DateTime.Now.Ticks > spawnTimeHealthPotion)
+            {
+                var random = new Random();
+
+                var availableCells = new List<Cell>();
+                foreach (var cell in Cells)
+                {
+                    if (cell.Spawnable && SpawnedHealthPotions < MAXSPAWNEDHEALTHPOTIONS)
+                        availableCells.Add(cell);
+                }
+                var randomCell = availableCells[random.Next(0, availableCells.Count)];
+                randomCell.HealthPotion = new HealthPotion();
+                SpawnedHealthPotions += 1;
+                spawnTimeHealthPotion = DateTime.Now.Ticks + 50000000;
+            }
+        }
         public void SpawnMonster()
         {
             // Place in infinite loop if we want to thread it in background
-            if (DateTime.Now.Ticks > spawnedTime)
+            if (DateTime.Now.Ticks > spawnTimeMonster)
             {
                 var random = new Random();
 
@@ -195,7 +220,7 @@ namespace ATeamRPG {
                 var randomCell = availableCells[random.Next(0, availableCells.Count)];
                 randomCell.Monster = new Monster();
                 SpawnedMonsters += 1;
-                spawnedTime = DateTime.Now.Ticks + 50000000;
+                spawnTimeMonster = DateTime.Now.Ticks + 50000000;
             }
         }
 
@@ -255,6 +280,9 @@ namespace ATeamRPG {
                     if (newCell.HasGold) {
                         newCell.Player.Gold += newCell.Gold;
                         newCell.Gold = 0;
+                    } else if (newCell.HasHealthPotion) {
+                        if (newCell.Player.Health < 20)
+                            newCell.Player.Health += newCell.HealthPotion.Health;
                     }
                 }
             }

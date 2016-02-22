@@ -23,7 +23,8 @@ namespace ATeamRPG {
                     playerOne.IsActive = true;
                     playerTwo.IsActive = false;
                 }
-                map.SpawnMonster();
+                map.SpawnMonster(); // Bg-thread?
+                map.SpawnHealthPotion(); // Bg-thread?
                 map.Draw();
             } while (true);
         }

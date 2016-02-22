@@ -34,6 +34,7 @@
                 }
             }
         }
+        public HealthPotion HealthPotion { get; set; }
         public void Player_Died(Player p) {
             Gold += p.Gold;
             p.Gold = 0;
@@ -51,6 +52,7 @@
             }
         }
         public bool HasMonster { get { return Monster != null; } }
+        public bool HasHealthPotion { get { return HealthPotion != null; } }
         public bool Walkable {
             get {
                 return CellType == CellType.Ground && !HasPlayer;
@@ -63,7 +65,7 @@
         }
         public bool Spawnable {
             get {
-                return !HasGold && !HasPlayer && CellType == CellType.Ground;
+                return !HasGold && !HasPlayer && !HasHealthPotion && !HasMonster && CellType == CellType.Ground;
             }
         }
         public bool HasGold {
