@@ -2,6 +2,23 @@
     class Cell {
         public CellType CellType { get; set; }
         Player player;
+        Monster monster;
+        public Monster Monster
+        {   get { return monster; }
+            set
+            {
+                if(value!=null)
+                {
+                    monster = value;
+                    monster.Died += Monster_Died;                    
+                }
+                else
+                {
+                    monster.Died -= Monster_Died;
+                    monster=value;                    
+                }
+            }
+        }
         public Player Player {
             get {
                 return player;
@@ -20,6 +37,11 @@
             Gold += p.Gold;
             p.Gold = 0;
             Player = null;
+        }
+        public void Monster_Died(Monster m)
+        {
+            Gold += m.Gold;
+            Monster = null;
         }
         public bool HasPlayer {
             get {
