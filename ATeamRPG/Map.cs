@@ -122,8 +122,8 @@ namespace ATeamRPG {
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         Console.Write("$");
                     } else if (cell.HasPlayer) {
-                        if ((cell.Character as Player).IsActive) {
-                            Console.ForegroundColor = cell.Character.Color;
+                        if (cell.Player.IsActive) {
+                            Console.ForegroundColor = cell.Player.Color;
                         } else {
                             Console.ForegroundColor = ConsoleColor.Gray;
                         }
@@ -162,7 +162,7 @@ namespace ATeamRPG {
         public void PlaceGold() {
             var random = new Random();
             foreach (var cell in Cells) {
-                if (cell.Goldable && random.NextDouble() <= goldChance) {
+                if (cell.IsGoldable && random.NextDouble() <= goldChance) {
                     cell.Gold += random.Next(goldRange[0], goldRange[1] + 1);
                 }
             }
@@ -173,13 +173,13 @@ namespace ATeamRPG {
             foreach (var player in players) {
                 List<Cell> emptyCells = new List<Cell>();
                 foreach (var cell in Cells) {
-                    if (cell.Spawnable) {
+                    if (cell.IsSpawnable) {
                         emptyCells.Add(cell);
                     }
                 }
                 if (emptyCells.Count > 0) {
                     var randomCell = emptyCells[random.Next(0, emptyCells.Count)];
-                    randomCell.Character = player;
+                    randomCell.Player = player;
                 } else {
                     throw new Exception("Error spawning player. No free cells.");
                 }
@@ -196,7 +196,7 @@ namespace ATeamRPG {
                 var availableCells = new List<Cell>();
                 foreach (var cell in Cells)
                 {
-                    if (cell.Spawnable && SpawnedHealthPotions < MAXSPAWNEDHEALTHPOTIONS)
+                    if (cell.IsSpawnable && SpawnedHealthPotions < MAXSPAWNEDHEALTHPOTIONS)
                         availableCells.Add(cell);
         }
                 var randomCell = availableCells[random.Next(0, availableCells.Count)];
@@ -216,7 +216,7 @@ namespace ATeamRPG {
                 var emptyCells = new List<Cell>();
                 foreach (var cell in Cells)
                 {
-                    if (cell.Spawnable && SpawnedMonsters < MAXSPAWNEDMONSTERS)
+                    if (cell.IsSpawnable && SpawnedMonsters < MAXSPAWNEDMONSTERS)
                         emptyCells.Add(cell);
                 }
                 var rndCell = emptyCells[rnd.Next(0, emptyCells.Count)];
@@ -236,7 +236,7 @@ namespace ATeamRPG {
         }
         Cell FindPlayer(Player player) {
             foreach (var cell in Cells) {
-                if (cell.Character == player) {
+                if (cell.Player == player) {
                     return cell;
                 }
             }
@@ -279,8 +279,8 @@ namespace ATeamRPG {
                 else if (newCell.HasMonster) {
                     newCell.Monster.Health -= currentCell.Player.Damage;
                 }
-                else if (newCell.Walkable) {
-                    var p = currentCell.Character;
+                else if (newCell.IsWalkable) {
+                    var p = currentCell.Player;
                     currentCell.OnCharacterLeft();
                     newCell.OnCharacterArrived(p);
                 }

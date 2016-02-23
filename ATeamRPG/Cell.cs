@@ -2,35 +2,19 @@
 
 namespace ATeamRPG {
     class Cell {
-        public CellType CellType { get; set; }
-        public Character Character { get; set; }
+        public CellType CellType { get; private set; }
+        Character Character { get; set; }
         public Monster Monster { get { return Character as Monster; } set { Character = value; } }
         public Player Player { get { return Character as Player; } set { Character = value; } }
         public bool HasPlayer { get { return HasCharacter && Character is Player; } }
+        public bool HasMonster { get { return HasCharacter && Character is Monster; } }
         public HealthPotion HealthPotion { get; set; }
         public bool HasCharacter { get { return Character != null; } }
-        public bool HasMonster { get { return HasCharacter && Character is Monster; } }
         public bool HasHealthPotion { get { return HealthPotion != null; } }
-        public bool Walkable {
-            get {
-                return CellType == CellType.Ground && !HasPlayer;
-            }
-        }
-        public bool Goldable {
-            get {
-                return !HasPlayer && CellType == CellType.Ground;
-            }
-        }
-        public bool Spawnable {
-            get {
-                return !HasGold && !HasPlayer && !HasHealthPotion && !HasMonster && CellType == CellType.Ground;
-            }
-        }
-        public bool HasGold {
-            get {
-                return Gold > 0;
-            }
-        }
+        public bool IsWalkable { get { return CellType == CellType.Ground && !HasCharacter; } }
+        public bool IsGoldable { get { return CellType == CellType.Ground && !HasCharacter; } }
+        public bool IsSpawnable { get { return IsWalkable && !HasGold && !HasHealthPotion; } }
+        public bool HasGold { get { return Gold > 0; } }
         public int Gold { get; set; }
         public int Y { get; set; }
         public int X { get; set; }
