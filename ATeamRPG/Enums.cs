@@ -1,5 +1,7 @@
-﻿namespace ATeamRPG {
-    enum CellType {
+﻿namespace ATeamRPG
+{
+    enum CellType
+    {
         Forest,
         Ground,
     }

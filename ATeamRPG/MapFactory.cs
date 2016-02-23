@@ -12,26 +12,36 @@ namespace ATeamRPG
         public const int WIDTH = 75;
         public const int HEIGHT = 20;
         public bool[,] Map = new bool[20, 75];
-        public MapFactory() {
+        public MapFactory()
+        {
             var random = new Random();
-            for (int y = 0; y < HEIGHT; y++) {
-                for (int x = 0; x < WIDTH; x++) {
-                    if (random.NextDouble() <= chanceToStartAlive) {
+            for (int y = 0; y < HEIGHT; y++)
+            {
+                for (int x = 0; x < WIDTH; x++)
+                {
+                    if (random.NextDouble() <= chanceToStartAlive)
+                    {
                         Map[y, x] = true;
                     }
                 }
             }
-            for (int i = 0; i < random.Next(1, 4); i++) {
+            for (int i = 0; i < random.Next(1, 4); i++)
+            {
                 Map = DoSimulationStep(Map);
             }
         }
-        void Draw() {
-            for (int y = 0; y < Map.GetLength(0); y++) {
-                for (int x = 0; x < Map.GetLength(1); x++) {
-                    if (Map[y, x] == true) {
+        void Draw()
+        {
+            for (int y = 0; y < Map.GetLength(0); y++)
+            {
+                for (int x = 0; x < Map.GetLength(1); x++)
+                {
+                    if (Map[y, x] == true)
+                    {
                         Console.ForegroundColor = ConsoleColor.DarkGreen;
                         Console.Write("#");
-                    } else if (Map[y, x] == false) {
+                    } else if (Map[y, x] == false)
+                    {
                         Console.ForegroundColor = ConsoleColor.White;
                         Console.Write(".");
                     }
@@ -48,7 +58,6 @@ namespace ATeamRPG
                 for (int y = 0; y < oldMap.GetLength(1); y++)
                 {
                     int neighbours = CountAliveNeighbours(oldMap, x, y);
-
                     if (neighbours < 4)
                         newMap[x, y] = false;
                     else if (neighbours > 4)
@@ -57,7 +66,6 @@ namespace ATeamRPG
             }
             return newMap;
         }
-
         static int CountAliveNeighbours(bool[,] map, int x, int y)
         {
             int count = 0;
@@ -67,7 +75,6 @@ namespace ATeamRPG
                 {
                     int neighbour_x = x + i;
                     int neighbour_y = y + j;
-
                     if (i == 0 && j == 0)
                     {
                         //Do nothing.
