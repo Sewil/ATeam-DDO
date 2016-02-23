@@ -49,8 +49,8 @@ namespace ATeamRPG {
             };
             foreach (var player in map.players) {
                 player.Died += (p) => {
-                    map.SpawnPlayers(p); // respawn on death
-                    p.Health = Player.HEALTH;
+                    map.SpawnPlayers(p as Player); // respawn on death
+                    (p as Player).Health = Player.HEALTH;
                 };
             }
             map.PlaceGold();
@@ -99,8 +99,8 @@ namespace ATeamRPG {
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         Console.Write("$");
                     } else if (cell.HasPlayer) {
-                        if (cell.Player.IsActive) {
-                            Console.ForegroundColor = cell.Player.Color;
+                        if ((cell.Character as Player).IsActive) {
+                            Console.ForegroundColor = cell.Character.Color;
                         } else {
                             Console.ForegroundColor = ConsoleColor.Gray;
                         }
@@ -113,17 +113,18 @@ namespace ATeamRPG {
                         Console.Write(".");
                     }
 
-                    Console.BackgroundColor = ConsoleColor.Black;
-                    Console.ForegroundColor = ConsoleColor.White;
                 }
                 Console.WriteLine();
             }
+
+            Console.BackgroundColor = ConsoleColor.Black;
+            Console.ForegroundColor = ConsoleColor.White;
 
             Console.WriteLine();
             Console.WriteLine($"Turn: {Turn}");
             for (int i = 0; i < players.Length; i++) {
                 var player = players[i];
-                Console.WriteLine($"Player {i + 1} gold: {player.Gold}, health: {player.Health}");
+                Console.WriteLine($"{player.Name} gold: {player.Gold}, health: {player.Health}, {player.IsActive}");
             }
         }
 
@@ -149,7 +150,7 @@ namespace ATeamRPG {
                 }
                 if (emptyCells.Count > 0) {
                     var randomCell = emptyCells[random.Next(0, emptyCells.Count)];
-                    randomCell.Player = player;
+                    randomCell.Character = player;
                 } else {
                     throw new Exception("Error spawning player. No free cells.");
                 }
@@ -157,7 +158,7 @@ namespace ATeamRPG {
         }
         Cell FindPlayer(Player player) {
             foreach (var cell in Cells) {
-                if (cell.Player == player) {
+                if (cell.Character == player) {
                     return cell;
                 }
             }
@@ -195,15 +196,11 @@ namespace ATeamRPG {
             if (newCell != null) {
                 Turn++;
                 if (newCell.HasPlayer) {
-                    newCell.Player.Health -= currentCell.Player.Damage;
+                    newCell.Character.Health -= currentCell.Character.Damage;
                 } else if (newCell.Walkable) {
-                    newCell.Player = currentCell.Player;
-                    currentCell.Player = null;
-
-                    if (newCell.HasGold) {
-                        newCell.Player.Gold += newCell.Gold;
-                        newCell.Gold = 0;
-                    }
+                    var p = currentCell.Character;
+                    currentCell.OnCharacterLeft();
+                    newCell.OnCharacterArrived(p);
                 }
             }
         }

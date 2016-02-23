@@ -44,11 +44,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Cell.cs" />
+    <Compile Include="Character.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Map.cs" />
     <Compile Include="MapFactory.cs" />
     <Compile Include="Monster.cs" />
     <Compile Include="Player.cs" />
+    <Compile Include="Potion.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
