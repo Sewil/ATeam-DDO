@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data.SqlClient;
+using MySql.Data.MySqlClient;
 
 namespace ATeamRPG {
     class Program {
