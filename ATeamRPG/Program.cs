@@ -2,9 +2,12 @@
 using System.Data.SqlClient;
 using MySql.Data.MySqlClient;
 
-namespace ATeamRPG {
-    class Program {
-        static void Main(string[] args) {
+namespace ATeamRPG
+{
+    class Program
+    {
+        static void Main(string[] args)
+        {
             var playerOne = new Player("Spelare1");
             var playerTwo = new Player("Spelare2");
             Console.CursorVisible = false;
@@ -12,19 +15,22 @@ namespace ATeamRPG {
             playerOne.IsActive = true;
             playerTwo.IsActive = false;
             map.Draw();
-            do {
+            do
+            {
                 map.SpawnMonster(); // Bg-thread?
                 ConsoleKey key = Console.ReadKey().Key;
                 Console.Clear();
-                if (map.Turn % 2 == 0) {
-                    if(key == ConsoleKey.D) {
+                if (map.Turn % 2 == 0)
+                {
+                    if(key == ConsoleKey.D)
+                    {
                         playerOne.OnDied();
                     }
-
                     map.MovePlayer(key, playerOne);
                     playerOne.IsActive = false;
                     playerTwo.IsActive = true;
-                } else {
+                } else
+                {
                     map.MovePlayer(key, playerTwo);
                     playerOne.IsActive = true;
                     playerTwo.IsActive = false;
