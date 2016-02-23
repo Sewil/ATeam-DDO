@@ -3,14 +3,14 @@
 namespace ATeamRPG {
     class Cell {
         public CellType CellType { get; set; }
-        public Potion Potion { get; set; }
         public Character Character { get; set; }
-
-        public bool HasPlayer {
-            get {
-                return Character != null;
-            }
-        }
+        public Monster Monster { get { return Character as Monster; } set { Character = value; } }
+        public Player Player { get { return Character as Player; } set { Character = value; } }
+        public bool HasPlayer { get { return HasCharacter && Character is Player; } }
+        public HealthPotion HealthPotion { get; set; }
+        public bool HasCharacter { get { return Character != null; } }
+        public bool HasMonster { get { return HasCharacter && Character is Monster; } }
+        public bool HasHealthPotion { get { return HealthPotion != null; } }
         public bool Walkable {
             get {
                 return CellType == CellType.Ground && !HasPlayer;
@@ -23,7 +23,7 @@ namespace ATeamRPG {
         }
         public bool Spawnable {
             get {
-                return !HasGold && !HasPlayer && CellType == CellType.Ground;
+                return !HasGold && !HasPlayer && !HasHealthPotion && !HasMonster && CellType == CellType.Ground;
             }
         }
         public bool HasGold {
@@ -42,12 +42,19 @@ namespace ATeamRPG {
             CellType = cellType;
 
             CharacterArrived += (c, ch) => {
-                c.Character = ch;
-                c.Character.Died += c.Character_Died;
+                ch.Died += c.Character_Died;
                 if (c.Gold > 0) {
                     ch.Gold += Gold;
                     c.Gold = 0;
                 }
+                if (c.HasHealthPotion) {
+                    if (ch.Health < 20) {
+                        ch.Health += c.HealthPotion.Health;
+                        c.HealthPotion = null;
+                    }
+                }
+
+                c.Character = ch;
             };
 
             CharacterLeft += (c) => {

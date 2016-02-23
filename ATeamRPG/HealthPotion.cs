@@ -4,15 +4,17 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ATeamRPG {
-    class Monster : Character {
+namespace ATeamRPG
+{
+    class HealthPotion
+    {
         public const int HEALTH = 10;
-        public const int DAMAGE = 2;
-        public Monster()
+        public ConsoleColor Color { get; set; }
+        public int Health { get; set; }
+        public HealthPotion()
         {
-            Color = ConsoleColor.DarkRed;
             Health = HEALTH;
-            Damage = DAMAGE;
+            Color = ConsoleColor.Blue;
         }
     }
 }

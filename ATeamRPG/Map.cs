@@ -3,8 +3,16 @@ using System.Collections.Generic;
 namespace ATeamRPG {
 
     class Map {
+        long spawnTimeMonster;
+        long spawnTimeHealthPotion;
         const int GOLD_ROUND_TURNS = 50;
+        const int MONSTER_SPAWN_TURNS = 5;
+        public const int MAXSPAWNEDMONSTERS = 10;
+        public const int MAXSPAWNEDHEALTHPOTIONS = 10;
         int turn;
+        public int monsterCount;
+        public int SpawnedMonsters { get; set; }
+        public int SpawnedHealthPotions { get; set; }
         public int Turn {
             get {
                 return turn;
@@ -14,7 +22,12 @@ namespace ATeamRPG {
                 if (turn % GOLD_ROUND_TURNS == 0) {
                     OnGoldRound(this);
                 }
+                if(turn%MONSTER_SPAWN_TURNS==0&&monsterCount>=10)
+                {
+                    OnMonsterSpawn(this);
+                    monsterCount++;
             }
+        }
         }
         public Player[] players;
         public const int WIDTH = 75;
@@ -37,12 +50,22 @@ namespace ATeamRPG {
             }
         }
         public event Action<Map> GoldRound;
+        public event Action<Map> MonsterSpawn;
         public void OnGoldRound(Map m) {
             GoldRound?.Invoke(m);
+        }
+        public void OnMonsterSpawn(Map m)
+        {
+            MonsterSpawn?.Invoke(m);
         }
         public static Map Load(params Player[] players) {
             var map = new Map {
                 players = players
+            };
+            var monsters = new Monster();
+            map.MonsterSpawn += (m) =>
+            {
+                m.SpawnMonsters();
             };
             map.GoldRound += (m) => {
                 m.PlaceGold();
@@ -105,6 +128,12 @@ namespace ATeamRPG {
                             Console.ForegroundColor = ConsoleColor.Gray;
                         }
                         Console.Write("@");
+                    } else if (cell.HasHealthPotion) {
+                        Console.ForegroundColor = cell.HealthPotion.Color;
+                        Console.Write("P");
+                    } else if (cell.HasMonster) {
+                        Console.ForegroundColor = cell.Monster.Color;
+                        Console.Write("M");
                     } else if (cell.CellType == CellType.Forest) {
                         Console.ForegroundColor = ConsoleColor.DarkGreen;
                         Console.Write("#");
@@ -156,6 +185,55 @@ namespace ATeamRPG {
                 }
             }
         }
+
+        public void SpawnHealthPotion()
+        {
+            // Place in infinite loop if we want to thread it in background
+            if (DateTime.Now.Ticks > spawnTimeHealthPotion)
+            {
+                var random = new Random();
+
+                var availableCells = new List<Cell>();
+                foreach (var cell in Cells)
+                {
+                    if (cell.Spawnable && SpawnedHealthPotions < MAXSPAWNEDHEALTHPOTIONS)
+                        availableCells.Add(cell);
+        }
+                var randomCell = availableCells[random.Next(0, availableCells.Count)];
+                randomCell.HealthPotion = new HealthPotion();
+                SpawnedHealthPotions += 1;
+                spawnTimeHealthPotion = DateTime.Now.Ticks + 50000000;
+            }
+        }
+
+        public void SpawnMonster()
+        {
+            // Place in infinite loop if we want to thread it in background
+            if (DateTime.Now.Ticks > spawnTimeMonster)
+            {
+                var rnd = new Random();
+
+                var emptyCells = new List<Cell>();
+                foreach (var cell in Cells)
+                {
+                    if (cell.Spawnable && SpawnedMonsters < MAXSPAWNEDMONSTERS)
+                        emptyCells.Add(cell);
+                }
+                var rndCell = emptyCells[rnd.Next(0, emptyCells.Count)];
+                rndCell.Monster = new Monster();
+                SpawnedMonsters += 1;
+                spawnTimeMonster = DateTime.Now.Ticks + 50000000;
+            }
+        }
+
+        public void SpawnMonsters(params Monster[] monsters)
+        {
+            var random = new Random();
+            foreach(var monster in monsters)
+            {
+
+            } 
+        }
         Cell FindPlayer(Player player) {
             foreach (var cell in Cells) {
                 if (cell.Character == player) {
@@ -196,8 +274,12 @@ namespace ATeamRPG {
             if (newCell != null) {
                 Turn++;
                 if (newCell.HasPlayer) {
-                    newCell.Character.Health -= currentCell.Character.Damage;
-                } else if (newCell.Walkable) {
+                    newCell.Player.Health -= currentCell.Player.Damage;
+                }
+                else if (newCell.HasMonster) {
+                    newCell.Monster.Health -= currentCell.Player.Damage;
+                }
+                else if (newCell.Walkable) {
                     var p = currentCell.Character;
                     currentCell.OnCharacterLeft();
                     newCell.OnCharacterArrived(p);
