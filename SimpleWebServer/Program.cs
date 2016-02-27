@@ -6,11 +6,13 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ATeamRPG;
 
 namespace SimpleWebServer
 {
     class Program
     {
+        static ateamEntities db = new ateamEntities();
         static string[] files = new string[]
         {
             "About/index.html",
@@ -96,7 +98,8 @@ namespace SimpleWebServer
                 Console.WriteLine("New /Stats visitor: " + context.Request.RemoteEndPoint.Address.ToString());
                 HttpListenerRequest request = context.Request;
                 HttpListenerResponse response = context.Response;
-                string responseString = File.ReadAllText(files[2]);
+                
+                string responseString = $"<h2>Stats</h2><ul><li>Games played: $x</li><li>Most monsters killed: $x by $player</li><li>Most gold collected: $x by $player</li><li>Most players killed: $x by $player</li></ul>";
                 byte[] buffer = Encoding.UTF8.GetBytes(responseString);
                 response.ContentLength64 = buffer.Length;
                 using (var output = response.OutputStream)
