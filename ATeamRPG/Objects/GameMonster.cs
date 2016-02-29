@@ -6,15 +6,15 @@ using System.Threading.Tasks;
 
 namespace ATeamRPG
 {
-    class HealthPotion
+    public class GameMonster : GameCharacter
     {
         public const int HEALTH = 10;
-        public ConsoleColor Color { get; set; }
-        public int Health { get; set; }
-        public HealthPotion()
+        public const int DAMAGE = 2;
+        public GameMonster()
         {
+            Color = ConsoleColor.DarkRed;
             Health = HEALTH;
-            Color = ConsoleColor.Blue;
+            Damage = DAMAGE;
         }
     }
 }

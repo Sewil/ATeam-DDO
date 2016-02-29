@@ -13,10 +13,10 @@ namespace ATeamRPG
     using System.Data.Entity;
     using System.Data.Entity.Infrastructure;
     
-    public partial class ateamEntities : DbContext
+    public partial class ATeamDB : DbContext
     {
-        public ateamEntities()
-            : base("name=ateamEntities")
+        public ATeamDB()
+            : base("name=ATeamDB")
         {
         }
     
@@ -26,5 +26,9 @@ namespace ATeamRPG
         }
     
         public virtual DbSet<Account> Account { get; set; }
+        public virtual DbSet<Cell> Cell { get; set; }
+        public virtual DbSet<Map> Map { get; set; }
+        public virtual DbSet<Player> Player { get; set; }
+        public virtual DbSet<Stat> Stat { get; set; }
     }
 }

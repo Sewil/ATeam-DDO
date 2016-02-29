@@ -12,7 +12,6 @@ namespace SimpleWebServer
 {
     class Program
     {
-        static ateamEntities db = new ateamEntities();
         static string[] files = new string[]
         {
             "About/index.html",
@@ -99,7 +98,12 @@ namespace SimpleWebServer
                 HttpListenerRequest request = context.Request;
                 HttpListenerResponse response = context.Response;
                 
-                string responseString = $"<h2>Stats</h2><ul><li>Games played: $x</li><li>Most monsters killed: $x by $player</li><li>Most gold collected: $x by $player</li><li>Most players killed: $x by $player</li></ul>";
+                string responseString = $"<html><body><h2>Stats</h2><ul>";
+                foreach (var stat in Game.db.Stat) {
+                    responseString += $"<li>{stat.Name}: {stat.Value}</li>";
+                }
+                responseString += "</ul></body></html>";
+
                 byte[] buffer = Encoding.UTF8.GetBytes(responseString);
                 response.ContentLength64 = buffer.Length;
                 using (var output = response.OutputStream)

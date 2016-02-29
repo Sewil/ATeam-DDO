@@ -12,17 +12,10 @@ namespace ATeamRPG
     using System;
     using System.Collections.Generic;
     
-    public partial class Map
+    public partial class Stat
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2214:DoNotCallOverridableMethodsInConstructors")]
-        public Map()
-        {
-            this.Cell = new HashSet<Cell>();
-        }
-    
         public int Id { get; set; }
-    
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Microsoft.Usage", "CA2227:CollectionPropertiesShouldBeReadOnly")]
-        public virtual ICollection<Cell> Cell { get; set; }
+        public string Name { get; set; }
+        public string Value { get; set; }
     }
 }

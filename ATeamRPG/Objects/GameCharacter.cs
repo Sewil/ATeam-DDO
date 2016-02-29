@@ -2,7 +2,7 @@
 
 namespace ATeamRPG
 {
-    public abstract class Character
+    public abstract class GameCharacter
     {
         public string Name { get; set; }
         public int Damage { get; set; }
@@ -24,7 +24,7 @@ namespace ATeamRPG
         }
         public ConsoleColor Color { get; set; }
         public int Gold { get; set; }
-        public event Action<Character> Died;
+        public event Action<GameCharacter> Died;
         public void OnDied()
         {
             Died?.Invoke(this);

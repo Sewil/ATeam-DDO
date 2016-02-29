@@ -59,59 +59,84 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Account.cs">
-      <DependentUpon>ATeamDB.tt</DependentUpon>
+      <DependentUpon>ATeamModel.tt</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="ATeamDB.Context.cs">
+    <Compile Include="ATeamModel.Context.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>ATeamDB.Context.tt</DependentUpon>
+      <DependentUpon>ATeamModel.Context.tt</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="ATeamDB.cs">
+    <Compile Include="ATeamModel.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>ATeamDB.tt</DependentUpon>
+      <DependentUpon>ATeamModel.tt</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="ATeamDB.Designer.cs">
+    <Compile Include="ATeamModel.Designer.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
-      <DependentUpon>ATeamDB.edmx</DependentUpon>
+      <DependentUpon>ATeamModel.edmx</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Compile>
-    <Compile Include="Cell.cs" />
-    <Compile Include="Character.cs" />
+    <Compile Include="Cell.cs">
+      <DependentUpon>ATeamModel.tt</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="Game.cs" />
+    <Compile Include="Map.cs">
+      <DependentUpon>ATeamModel.tt</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
+    <Compile Include="Objects\GameCell.cs" />
+    <Compile Include="Objects\GameCharacter.cs" />
     <Compile Include="Enums.cs" />
-    <Compile Include="HealthPotion.cs" />
-    <Compile Include="Map.cs" />
-    <Compile Include="MapFactory.cs" />
-    <Compile Include="Monster.cs" />
-    <Compile Include="Player.cs" />
+    <Compile Include="Objects\GamePotion.cs" />
+    <Compile Include="Objects\GameMap.cs" />
+    <Compile Include="Objects\MapFactory.cs" />
+    <Compile Include="Objects\GameMonster.cs" />
+    <Compile Include="Objects\GamePlayer.cs" />
+    <Compile Include="Player.cs">
+      <DependentUpon>ATeamModel.tt</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Stat.cs">
+      <DependentUpon>ATeamModel.tt</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-    <EntityDeploy Include="ATeamDB.edmx">
+    <EntityDeploy Include="ATeamModel.edmx">
       <Generator>EntityModelCodeGenerator</Generator>
-      <LastGenOutput>ATeamDB.Designer.cs</LastGenOutput>
+      <LastGenOutput>ATeamModel.Designer.cs</LastGenOutput>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EntityDeploy>
-    <None Include="ATeamDB.edmx.diagram">
-      <DependentUpon>ATeamDB.edmx</DependentUpon>
+    <None Include="ATeamModel.edmx.diagram">
+      <DependentUpon>ATeamModel.edmx</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="ATeamDB.Context.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <DependentUpon>ATeamDB.edmx</DependentUpon>
-      <LastGenOutput>ATeamDB.Context.cs</LastGenOutput>
-    </Content>
-    <Content Include="ATeamDB.tt">
-      <Generator>TextTemplatingFileGenerator</Generator>
-      <DependentUpon>ATeamDB.edmx</DependentUpon>
-      <LastGenOutput>ATeamDB.cs</LastGenOutput>
-    </Content>
+    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
-    <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
+    <Content Include="ATeamModel.Context.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>ATeamModel.edmx</DependentUpon>
+      <LastGenOutput>ATeamModel.Context.cs</LastGenOutput>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="ATeamModel.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>ATeamModel.edmx</DependentUpon>
+      <LastGenOutput>ATeamModel.cs</LastGenOutput>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -2,35 +2,25 @@
 using System.Data.SqlClient;
 using MySql.Data.MySqlClient;
 
-namespace ATeamRPG
-{
-    class Program
-    {
-        static void Main(string[] args)
-        {
-            var playerOne = new Player("Spelare1");
-            var playerTwo = new Player("Spelare2");
+namespace ATeamRPG {
+    class Program {
+        static void Main(string[] args) {
             Console.CursorVisible = false;
-            Map map = Map.Load(playerOne, playerTwo);
-            playerOne.IsActive = true;
-            playerTwo.IsActive = false;
+            Game game = Game.Start(2, 3);
+            GameMap map = game.GameMap;
+            game.UpdateState();
+            var playerOne = map.Players[0];
+            var playerTwo = map.Players[1];
             map.Draw();
-            do
-            {
+            do {
                 map.SpawnMonster(); // Bg-thread?
                 ConsoleKey key = Console.ReadKey().Key;
                 Console.Clear();
-                if (map.Turn % 2 == 0)
-                {
-                    if(key == ConsoleKey.D)
-                    {
-                        playerOne.OnDied();
-                    }
+                if (map.Turn % 2 == 0) {
                     map.MovePlayer(key, playerOne);
                     playerOne.IsActive = false;
                     playerTwo.IsActive = true;
-                } else
-                {
+                } else {
                     map.MovePlayer(key, playerTwo);
                     playerOne.IsActive = true;
                     playerTwo.IsActive = false;
