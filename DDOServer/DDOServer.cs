@@ -6,9 +6,11 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using DDODatabase;
 
 namespace DDOServer {
-    class DDOServer {
+    public class DDOServer {
+        public static ATeamDB db = new ATeamDB();
         static Socket socket = null;
         const Int32 LISTENERBACKLOG = 100;
         const Int32 BUFFERLENGTHMAP = 2000;

@@ -6,10 +6,9 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using DDODatabase;
+using DDOServer;
 namespace SimpleWebServer {
     class Program {
-        public static ATeamDB db = new ATeamDB();
         static string[] files = new string[]
         {
             "About/index.html",
@@ -88,7 +87,7 @@ namespace SimpleWebServer {
                 HttpListenerResponse response = context.Response;
 
                 string responseString = $"<html><body><h2>Stats</h2><ul>";
-                foreach (var stat in db.Stats) {
+                foreach (var stat in DDOServer.DDOServer.db.Stats) {
                     responseString += $"<li>{stat.Name}: {stat.Value}</li>";
                 }
                 responseString += "</ul></body></html>";

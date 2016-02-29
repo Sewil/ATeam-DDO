@@ -62,12 +62,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DDODatabase\DDODatabase.csproj">
-      <Project>{e87921cf-b7d4-4612-952f-7438ed4c05e1}</Project>
-      <Name>DDODatabase</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
   </ItemGroup>
   <ItemGroup>
@@ -77,6 +71,16 @@
     <Content Include="Rules\index.html">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DDODatabase\DDODatabase.csproj">
+      <Project>{E87921CF-B7D4-4612-952F-7438ED4C05E1}</Project>
+      <Name>DDODatabase</Name>
+    </ProjectReference>
+    <ProjectReference Include="..\DDOServer\DDOServer.csproj">
+      <Project>{e42ef4cf-b72a-4bd0-b16c-148d9afe7f6c}</Project>
+      <Name>DDOServer</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
