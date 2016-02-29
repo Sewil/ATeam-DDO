@@ -4,11 +4,11 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{2E8BA20A-2DCB-44F3-B647-C91647C73FE0}</ProjectGuid>
+    <ProjectGuid>{E87921CF-B7D4-4612-952F-7438ED4C05E1}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SimpleWebServer</RootNamespace>
-    <AssemblyName>SimpleWebServer</AssemblyName>
+    <RootNamespace>DDODatabase</RootNamespace>
+    <AssemblyName>DDODatabase</AssemblyName>
     <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -54,29 +54,58 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Account.cs">
+      <DependentUpon>ATeamModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="ATeamModel.Context.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ATeamModel.Context.tt</DependentUpon>
+    </Compile>
+    <Compile Include="ATeamModel.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ATeamModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="ATeamModel.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>ATeamModel.edmx</DependentUpon>
+    </Compile>
+    <Compile Include="Map.cs">
+      <DependentUpon>ATeamModel.tt</DependentUpon>
+    </Compile>
+    <Compile Include="Player.cs">
+      <DependentUpon>ATeamModel.tt</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Stat.cs">
+      <DependentUpon>ATeamModel.tt</DependentUpon>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
+    <EntityDeploy Include="ATeamModel.edmx">
+      <Generator>EntityModelCodeGenerator</Generator>
+      <LastGenOutput>ATeamModel.Designer.cs</LastGenOutput>
+    </EntityDeploy>
+    <None Include="ATeamModel.edmx.diagram">
+      <DependentUpon>ATeamModel.edmx</DependentUpon>
+    </None>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="About\index.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <Content Include="ATeamModel.Context.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>ATeamModel.edmx</DependentUpon>
+      <LastGenOutput>ATeamModel.Context.cs</LastGenOutput>
     </Content>
-    <Content Include="Rules\index.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    <Content Include="ATeamModel.tt">
+      <Generator>TextTemplatingFileGenerator</Generator>
+      <DependentUpon>ATeamModel.edmx</DependentUpon>
+      <LastGenOutput>ATeamModel.cs</LastGenOutput>
     </Content>
-    <Content Include="Stats\index.html">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\ATeamRPG\ATeamRPG.csproj">
-      <Project>{63f47317-4880-491a-b00c-41f570f1f51a}</Project>
-      <Name>ATeamRPG</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Service Include="{508349B6-6B84-4DF5-91F0-309BEEBAD82D}" />
