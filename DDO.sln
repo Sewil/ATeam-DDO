@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOServer", "DDOServer\DDOS
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOWebServer", "DDOWebServer\DDOWebServer.csproj", "{D57E84EE-8E6B-466F-AE5A-1F5CDB1A253C}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOMasterServer", "DDOMasterServer\DDOMasterServer.csproj", "{D1AADD89-6B34-4094-BC2D-BFA2E63A0665}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{D57E84EE-8E6B-466F-AE5A-1F5CDB1A253C}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D57E84EE-8E6B-466F-AE5A-1F5CDB1A253C}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D57E84EE-8E6B-466F-AE5A-1F5CDB1A253C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D1AADD89-6B34-4094-BC2D-BFA2E63A0665}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D1AADD89-6B34-4094-BC2D-BFA2E63A0665}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D1AADD89-6B34-4094-BC2D-BFA2E63A0665}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D1AADD89-6B34-4094-BC2D-BFA2E63A0665}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
