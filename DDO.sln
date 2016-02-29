@@ -3,13 +3,13 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOWebServer", "SimpleWebServer\DDOWebServer.csproj", "{2E8BA20A-2DCB-44F3-B647-C91647C73FE0}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOServer", "..\..\Desktop\DDO Client-Server v1.2\ddoserver\ddoserver\DDOServer.csproj", "{B1029F67-5860-4BDA-B197-DCC96F9ED7ED}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDODatabase", "DDODatabase\DDODatabase.csproj", "{E87921CF-B7D4-4612-952F-7438ED4C05E1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOClient", "..\..\Desktop\DDO Client-Server v1.2\ddoclient\ddoclient\DDOClient.csproj", "{41FA814F-6F0F-490D-84C9-7A4D203A9274}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOClient", "DDOClient\DDOClient.csproj", "{0C6B7520-C3B2-49C6-99B4-34007813A521}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOServer", "DDOServer\DDOServer.csproj", "{E42EF4CF-B72A-4BD0-B16C-148D9AFE7F6C}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOWebServer", "DDOWebServer\DDOWebServer.csproj", "{D57E84EE-8E6B-466F-AE5A-1F5CDB1A253C}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -17,22 +17,22 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{2E8BA20A-2DCB-44F3-B647-C91647C73FE0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{2E8BA20A-2DCB-44F3-B647-C91647C73FE0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{2E8BA20A-2DCB-44F3-B647-C91647C73FE0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{2E8BA20A-2DCB-44F3-B647-C91647C73FE0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B1029F67-5860-4BDA-B197-DCC96F9ED7ED}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B1029F67-5860-4BDA-B197-DCC96F9ED7ED}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B1029F67-5860-4BDA-B197-DCC96F9ED7ED}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B1029F67-5860-4BDA-B197-DCC96F9ED7ED}.Release|Any CPU.Build.0 = Release|Any CPU
 		{E87921CF-B7D4-4612-952F-7438ED4C05E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{E87921CF-B7D4-4612-952F-7438ED4C05E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{E87921CF-B7D4-4612-952F-7438ED4C05E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{E87921CF-B7D4-4612-952F-7438ED4C05E1}.Release|Any CPU.Build.0 = Release|Any CPU
-		{41FA814F-6F0F-490D-84C9-7A4D203A9274}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{41FA814F-6F0F-490D-84C9-7A4D203A9274}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{41FA814F-6F0F-490D-84C9-7A4D203A9274}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{41FA814F-6F0F-490D-84C9-7A4D203A9274}.Release|Any CPU.Build.0 = Release|Any CPU
+		{0C6B7520-C3B2-49C6-99B4-34007813A521}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{0C6B7520-C3B2-49C6-99B4-34007813A521}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{0C6B7520-C3B2-49C6-99B4-34007813A521}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{0C6B7520-C3B2-49C6-99B4-34007813A521}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E42EF4CF-B72A-4BD0-B16C-148D9AFE7F6C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E42EF4CF-B72A-4BD0-B16C-148D9AFE7F6C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E42EF4CF-B72A-4BD0-B16C-148D9AFE7F6C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E42EF4CF-B72A-4BD0-B16C-148D9AFE7F6C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D57E84EE-8E6B-466F-AE5A-1F5CDB1A253C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D57E84EE-8E6B-466F-AE5A-1F5CDB1A253C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D57E84EE-8E6B-466F-AE5A-1F5CDB1A253C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D57E84EE-8E6B-466F-AE5A-1F5CDB1A253C}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -4,7 +4,7 @@
   <PropertyGroup>
     <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
-    <ProjectGuid>{93062F74-DF1E-4F4D-81D5-F3321B509D35}</ProjectGuid>
+    <ProjectGuid>{E42EF4CF-B72A-4BD0-B16C-148D9AFE7F6C}</ProjectGuid>
     <OutputType>Exe</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>DDOServer</RootNamespace>
@@ -43,7 +43,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Program.cs" />
+    <Compile Include="Cell.cs" />
+    <Compile Include="Character.cs" />
+    <Compile Include="DDOServer.cs" />
+    <Compile Include="Enums.cs" />
+    <Compile Include="HealthPotion.cs" />
+    <Compile Include="Map.cs" />
+    <Compile Include="MapFactory.cs" />
+    <Compile Include="Monster.cs" />
+    <Compile Include="Player.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

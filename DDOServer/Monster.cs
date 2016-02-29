@@ -4,14 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ATeamRPG
-{
-    public class GameMonster : GameCharacter
-    {
+namespace DDOServer {
+    class Monster : Character {
         public const int HEALTH = 10;
         public const int DAMAGE = 2;
-        public GameMonster()
-        {
+        public Monster() {
             Color = ConsoleColor.DarkRed;
             Health = HEALTH;
             Damage = DAMAGE;

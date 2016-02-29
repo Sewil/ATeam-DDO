@@ -7,10 +7,8 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DDODatabase;
-namespace SimpleWebServer
-{
-    class Program
-    {
+namespace SimpleWebServer {
+    class Program {
         public static ATeamDB db = new ATeamDB();
         static string[] files = new string[]
         {
@@ -18,8 +16,7 @@ namespace SimpleWebServer
             "Rules/index.html",
             "Stats/index.html"
         };
-        static void Main(string[] args)
-        {
+        static void Main(string[] args) {
             var prefixes = new string[]
             {
                 "http://localhost/"
@@ -33,8 +30,7 @@ namespace SimpleWebServer
             if (prefixes == null || prefixes.Length == 0)
                 throw new ArgumentException("prefixes");
             var listener = new HttpListener();
-            foreach (string s in prefixes)
-            {
+            foreach (string s in prefixes) {
                 listener.Prefixes.Add(s);
             }
             Console.WriteLine("WEB SERVER...");
@@ -42,8 +38,7 @@ namespace SimpleWebServer
             new Thread(new ParameterizedThreadStart(Rules)).Start();
             new Thread(new ParameterizedThreadStart(Stats)).Start();
         }
-        static void About(object arg)
-        {
+        static void About(object arg) {
             var listener = new HttpListener();
             listener.Prefixes.Add("http://localhost/About/");
             while (true) {
@@ -56,19 +51,16 @@ namespace SimpleWebServer
                 string responseString = File.ReadAllText(files[0]);
                 byte[] buffer = Encoding.UTF8.GetBytes(responseString);
                 response.ContentLength64 = buffer.Length;
-                using (var output = response.OutputStream)
-                {
+                using (var output = response.OutputStream) {
                     output.Write(buffer, 0, buffer.Length);
                 }
                 listener.Stop();
             }
         }
-        static void Rules(object arg)
-        {
+        static void Rules(object arg) {
             var listener = new HttpListener();
             listener.Prefixes.Add("http://localhost/Rules/");
-            while (true)
-            {
+            while (true) {
                 Console.WriteLine("/Rules listening...");
                 listener.Start();
                 var context = listener.GetContext();
@@ -78,26 +70,23 @@ namespace SimpleWebServer
                 string responseString = File.ReadAllText(files[1]);
                 byte[] buffer = Encoding.UTF8.GetBytes(responseString);
                 response.ContentLength64 = buffer.Length;
-                using (var output = response.OutputStream)
-                {
+                using (var output = response.OutputStream) {
                     output.Write(buffer, 0, buffer.Length);
                 }
                 listener.Stop();
             }
         }
-        static void Stats(object arg)
-        {
+        static void Stats(object arg) {
             var listener = new HttpListener();
             listener.Prefixes.Add("http://localhost/Stats/");
-            while (true)
-            {
+            while (true) {
                 Console.WriteLine("/Stats listening...");
                 listener.Start();
                 var context = listener.GetContext();
                 Console.WriteLine("New /Stats visitor: " + context.Request.RemoteEndPoint.Address.ToString());
                 HttpListenerRequest request = context.Request;
                 HttpListenerResponse response = context.Response;
-                
+
                 string responseString = $"<html><body><h2>Stats</h2><ul>";
                 foreach (var stat in db.Stats) {
                     responseString += $"<li>{stat.Name}: {stat.Value}</li>";
@@ -106,8 +95,7 @@ namespace SimpleWebServer
 
                 byte[] buffer = Encoding.UTF8.GetBytes(responseString);
                 response.ContentLength64 = buffer.Length;
-                using (var output = response.OutputStream)
-                {
+                using (var output = response.OutputStream) {
                     output.Write(buffer, 0, buffer.Length);
                 }
                 listener.Stop();

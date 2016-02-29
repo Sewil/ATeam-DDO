@@ -5,11 +5,11 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("ATeamRPG")]
+[assembly: AssemblyTitle("DDOWebServer")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("ATeamRPG")]
+[assembly: AssemblyProduct("DDOWebServer")]
 [assembly: AssemblyCopyright("Copyright ©  2016")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("63f47317-4880-491a-b00c-41f570f1f51a")]
+[assembly: Guid("d57e84ee-8e6b-466f-ae5a-1f5cdb1a253c")]
 
 // Version information for an assembly consists of the following four values:
 //
