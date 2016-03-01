@@ -26,7 +26,6 @@ namespace DDODatabase
         }
     
         public virtual DbSet<Account> Accounts { get; set; }
-        public virtual DbSet<Map> Maps { get; set; }
         public virtual DbSet<Player> Players { get; set; }
         public virtual DbSet<Stat> Stats { get; set; }
     }

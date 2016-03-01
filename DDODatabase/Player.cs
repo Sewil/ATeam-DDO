@@ -19,5 +19,8 @@ namespace DDODatabase
         public int Damage { get; set; }
         public int Gold { get; set; }
         public int AccountId { get; set; }
+        public string Name { get; set; }
+    
+        public virtual Account Account { get; set; }
     }
 }

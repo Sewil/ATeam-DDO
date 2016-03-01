@@ -55,6 +55,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Transfer.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Protocol.cs" />
@@ -64,16 +65,6 @@
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\DDODatabase\DDODatabase.csproj">
-      <Project>{E87921CF-B7D4-4612-952F-7438ED4C05E1}</Project>
-      <Name>DDODatabase</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\DDOServer\DDOServer.csproj">
-      <Project>{e42ef4cf-b72a-4bd0-b16c-148d9afe7f6c}</Project>
-      <Name>DDOServer</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <WCFMetadata Include="Service References\" />
