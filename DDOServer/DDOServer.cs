@@ -22,7 +22,7 @@ namespace DDOServer {
         static object locker = new object();
         public static ATeamDB db = new ATeamDB();
         const int LISTENER_BACKLOG = 100;
-        static Socket masterServer = null;
+        //static Socket masterServer = null;
         static Socket server = null;
         static IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
         static IPEndPoint serverEndPoint = new IPEndPoint(ipAddress, 8001);
@@ -94,20 +94,22 @@ namespace DDOServer {
         static void ListenToClientRequests(object arg) {
             Console.WriteLine("Listening to client requests...");
             while (true) {
-                lock (locker) {
-                    foreach (var client in clients) {
-                        protocol.Socket = client.Socket;
-                        var transfer = protocol.Receive();
-                        if (transfer != null) {
-                            Console.WriteLine(protocol.GetMessage(transfer));
-                            var response = HandleClientRequest(client, (Request)transfer);
-                            if (response != null) {
-                                Console.WriteLine(protocol.GetMessage(response));
-                                protocol.Send(response);
-                            }
+                var clientsTemp = clients;
+                var protocolTemp = protocol;
+                // to avoid dangerous stuff and increase async
 
-                            break;
+                foreach (var client in clientsTemp) {
+                    protocolTemp.Socket = client.Socket;
+                    var transfer = protocolTemp.Receive();
+                    if (transfer != null) {
+                        Console.WriteLine(protocolTemp.GetMessage(transfer));
+                        var response = HandleClientRequest(client, (Request)transfer);
+                        if (response != null) {
+                            Console.WriteLine(protocolTemp.GetMessage(response));
+                            protocolTemp.Send(response);
                         }
+
+                        break;
                     }
                 }
             }
@@ -130,7 +132,7 @@ namespace DDOServer {
             if (request.Status == RequestStatus.START) {
                 if (clients.Count >= 2) {
                     gameStarted = true;
-                    new Thread(new ParameterizedThreadStart(PlayDDO)).Start(); // initiate game on separate thread
+                    LoadMap();
                     return new Response(ResponseStatus.OK, "");
                 } else {
                     return new Response(ResponseStatus.NOT_READY, "");
@@ -208,17 +210,16 @@ namespace DDOServer {
             serverEndPoint = new IPEndPoint(ipAddress, int.Parse(tokens[1]));
             */
         }
-        static void PlayDDO(object arg) {
-            lock (locker) {
-                var players = new List<Player>();
-                foreach (var client in clients) {
-                    var selectedPlayer = client.SelectedPlayer;
-                    var player = new Player(selectedPlayer.Name);
-                    players.Add(player);
-                }
-                map = Map.Load(players.ToArray());
-                mapStr = map.MapToString();
+        static void LoadMap() {
+            var clientsTemp = clients;
+            var players = new List<Player>();
+            foreach (var client in clientsTemp) {
+                var selectedPlayer = client.SelectedPlayer;
+                var player = new Player(selectedPlayer.Name);
+                players.Add(player);
             }
+            map = Map.Load(players.ToArray());
+            mapStr = map.MapToString();
         }
     }
 }
