@@ -19,6 +19,7 @@
     }
     public enum RequestStatus
     {
+        NONE,
         GET_ACCOUNT_PLAYERS,
         SELECT_PLAYER,
         GET_MAP,

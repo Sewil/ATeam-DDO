@@ -189,6 +189,25 @@ namespace DDOServer {
                 return new Response(ResponseStatus.NOT_READY, "GAME NOT STARTED");
             }
         }
+        static void ConnectToMasterServer() {
+            /*
+            doesn't quite work yet
+
+            masterServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            masterServer.Connect(masterServerEndPoint);
+            Protocol p = new Protocol("DDO/1.0", new UTF8Encoding(), 100, masterServer);
+            Console.WriteLine("Connected to MasterServer.");
+
+            // Låt master-servern veta att det är en server som ansluter
+            p.Send(new Request(RequestStatus.NONE, "server"));
+
+            var tokens = p.Receive().Data.Split(' ');
+            serverID = int.Parse(tokens[0]);
+
+            // Definiera localEndPoint med Porten vi fick från MasterServern
+            serverEndPoint = new IPEndPoint(ipAddress, int.Parse(tokens[1]));
+            */
+        }
         static void PlayDDO(object arg) {
             lock (locker) {
                 var players = new List<Player>();
@@ -199,15 +218,6 @@ namespace DDOServer {
                 }
                 map = Map.Load(players.ToArray());
                 mapStr = map.MapToString();
-            }
-        }
-        static void ConnectToMasterServer() {
-            try {
-                masterServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                masterServer.Connect(masterServerEndPoint);
-                Console.WriteLine("Connected to MasterServer.");
-            } catch {
-                Console.WriteLine("Couldn't connect to master server");
             }
         }
     }

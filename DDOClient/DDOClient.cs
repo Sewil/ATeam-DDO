@@ -28,8 +28,8 @@ namespace DDOClient {
                     break;
                 } catch {
                     Console.WriteLine("Connection failed. Trying again...");
-                }
-            }
+        }
+        }
 
             if (connected) {
                 Console.Clear();
@@ -47,7 +47,7 @@ namespace DDOClient {
                             map = ReceiveMap();
                         } else if (turn % 2 == 0) {
                             map = ReceiveMap();
-                        }
+        }
                         player = GetPlayer();
                         turn++;
                         DrawMap(map);
@@ -111,12 +111,15 @@ namespace DDOClient {
                 case ConsoleKey.UpArrow:
                     protocol.Send(new Request(RequestStatus.MOVE, "↑"));
                     break;
+
                 case ConsoleKey.RightArrow:
                     protocol.Send(new Request(RequestStatus.MOVE, "→"));
                     break;
+
                 case ConsoleKey.DownArrow:
                     protocol.Send(new Request(RequestStatus.MOVE, "↓"));
                     break;
+
                 case ConsoleKey.LeftArrow:
                     protocol.Send(new Request(RequestStatus.MOVE, "←"));
                     break;
@@ -133,7 +136,9 @@ namespace DDOClient {
                     count++;
                 }
             }
+
             Console.Clear();
+
             Console.ForegroundColor = ConsoleColor.White;
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
@@ -145,6 +150,7 @@ namespace DDOClient {
                             Console.ForegroundColor = ConsoleColor.Green;
                         else if (turn % 2 == 0)
                             Console.ForegroundColor = ConsoleColor.Red;
+
                         Console.Write("@");
                     } else if (mapCharArray[y, x] == 'P') {
                         Console.ForegroundColor = ConsoleColor.Red;
@@ -162,6 +168,7 @@ namespace DDOClient {
                 }
                 Console.WriteLine();
             }
+
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
         }
