@@ -1,12 +1,15 @@
-﻿namespace DDOProtocol {
-    public enum ResponseType {
+﻿namespace DDOProtocol
+{
+    public enum ResponseType
+    {
         SENDSTATE,
         MOVE_OK,
         MOVE_BLOCKED,
         LOGIN_ACCEPTED,
         LOGIN_REJECTED,
     }
-    public enum RequestType {
+    public enum RequestType
+    {
         LOGIN,
         GETSTATE,
         MOVE

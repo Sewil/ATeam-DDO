@@ -4,11 +4,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DDOServer {
-    class Monster : Character {
+namespace DDOServer
+{
+    class Monster : Character
+    {
         public const int HEALTH = 10;
         public const int DAMAGE = 2;
-        public Monster() {
+        public Monster()
+        {
             Color = ConsoleColor.DarkRed;
             Health = HEALTH;
             Damage = DAMAGE;

@@ -1,7 +1,9 @@
 ﻿using System;
 
-namespace DDOServer {
-    class Cell {
+namespace DDOServer
+{
+    class Cell
+    {
         public CellType CellType { get; private set; }
         Character Character { get; set; }
         public Monster Monster { get { return Character as Monster; } set { Character = value; } }
@@ -18,48 +20,50 @@ namespace DDOServer {
         public int Gold { get; set; }
         public int Y { get; set; }
         public int X { get; set; }
-
-        public Cell(int y, int x, CellType cellType) {
+        public Cell(int y, int x, CellType cellType)
+        {
             Gold = 0;
             Y = y;
             X = x;
             CellType = cellType;
-
-            CharacterArrived += (c, ch) => {
+            CharacterArrived += (c, ch) =>
+            {
                 ch.Died += c.Character_Died;
-                if (c.Gold > 0) {
+                if (c.Gold > 0)
+                {
                     ch.Gold += Gold;
                     c.Gold = 0;
                 }
-                if (c.HasHealthPotion) {
-                    if (ch.Health < 20) {
+                if (c.HasHealthPotion)
+                {
+                    if (ch.Health < 20)
+                    {
                         ch.Health += c.HealthPotion.Health;
                         c.HealthPotion = null;
                     }
                 }
-
                 c.Character = ch;
-            };
-
-            CharacterLeft += (c) => {
+            };        
+            CharacterLeft += (c) =>
+            {
                 c.Character.Died -= c.Character_Died;
                 c.Character = null;
             };
         }
-
-        private void Character_Died(Character character) {
+        private void Character_Died(Character character)
+        {
             Gold += character.Gold;
             character.Gold = 0;
             OnCharacterLeft();
         }
-
         public event Action<Cell, Character> CharacterArrived;
-        public void OnCharacterArrived(Character ch) {
+        public void OnCharacterArrived(Character ch)
+        {
             CharacterArrived?.Invoke(this, ch);
         }
-
         public event Action<Cell> CharacterLeft;
-        public void OnCharacterLeft() {
+        public void OnCharacterLeft()
+        {
             CharacterLeft?.Invoke(this);
         }
     }

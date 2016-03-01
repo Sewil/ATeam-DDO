@@ -5,12 +5,15 @@ using System.Text;
 using System.Threading.Tasks;
 using DDOServer;
 
-namespace DDOProtocol {
-    public class Request {
+namespace DDOProtocol
+{
+    public class Request
+    {
         public Protocol Protocol { get; }
         public RequestType RequestType { get; }
         public string Message { get; }
-        public Request(Protocol protocol, RequestType requestType, string message) {
+        public Request(Protocol protocol, RequestType requestType, string message)
+        {
             Protocol = protocol;
             RequestType = requestType;
             Message = message;

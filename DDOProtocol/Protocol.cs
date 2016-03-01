@@ -4,36 +4,45 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DDOProtocol {
-    public class Protocol {
+namespace DDOProtocol
+{
+    public class Protocol
+    {
         public string Name { get; }
         public Encoding Encoding { get; }
         public int MsgSize { get; }
-        public Protocol(string name, Encoding encoding, int msgSize) {
+        public Protocol(string name, Encoding encoding, int msgSize)
+        {
             Name = name;
             Encoding = encoding;
             MsgSize = msgSize;
         }
-        public void Login(string username, string password) {
+        public void Login(string username, string password)
+        {
             Send(new Request(this, RequestType.LOGIN, $"{username} {password}"));
-
             var u = DDOServer.DDOServer.db.Accounts.SingleOrDefault(a => a.Username == username);
-            if (u != null) {
-                if (u.Password == password) {
+            if (u != null)
+            {
+                if (u.Password == password)
+                {
                     Send(new Response(ResponseType.LOGIN_ACCEPTED, $"{username} {password}"));
-                } else {
+                }
+                else
+                {
                     Send(new Response(ResponseType.LOGIN_REJECTED, $"{username} WRONG PASSWORD"));
                 }
-            } else {
+            }
+            else
+            {
                 Send(new Response(ResponseType.LOGIN_REJECTED, $"{username} DOES NOT EXIST"));
             }
-
         }
-
-        public void Send(Response response) {
+        public void Send(Response response)
+        {
             Console.WriteLine($"(REQUEST) {Name} {response.ResponseType} {response.Message}");
         }
-        public void Send(Request request) {
+        public void Send(Request request)
+        {
             Console.WriteLine($"(REQUEST) {Name} {request.RequestType} {request.Message}");
         }
         /*

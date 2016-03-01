@@ -1,5 +1,7 @@
-﻿namespace DDOServer {
-    enum CellType {
+﻿namespace DDOServer
+{
+    enum CellType
+    {
         Forest,
         Ground,
     }
