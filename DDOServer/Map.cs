@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
 
 namespace DDOServer
 {
@@ -97,6 +98,7 @@ namespace DDOServer
             }
             map.PlaceGold();
             map.SpawnPlayers(players);
+            
             return map;
         }
         int CountForestNeighbors(int y, int x)
@@ -214,7 +216,6 @@ namespace DDOServer
         }
         public void SpawnHealthPotion()
         {
-            // Place in infinite loop if we want to thread it in background
             if (DateTime.Now.Ticks > spawnTimeHealthPotion)
             {
                 var random = new Random();
@@ -232,7 +233,6 @@ namespace DDOServer
         }
         public void SpawnMonster()
         {
-            // Place in infinite loop if we want to thread it in background
             if (DateTime.Now.Ticks > spawnTimeMonster)
             {
                 var rnd = new Random();
