@@ -34,7 +34,9 @@ namespace DDOServer
             socket.Receive(bufferIn);
 
             string request = encoding.GetString(bufferIn).TrimEnd('\0').Trim();
-            name = request;
+            Console.WriteLine("Received request from " + socket.RemoteEndPoint + ": " + request);
+
+            name = request.Split(' ')[2];
         }
 
         static char RecieveDirection(Socket socket)
@@ -43,6 +45,8 @@ namespace DDOServer
             socket.Receive(bufferIn);
 
             string request = encoding.GetString(bufferIn).TrimEnd('\0').Trim();
+            Console.WriteLine("Received request from " + socket.RemoteEndPoint + ": " + request);
+
             return Convert.ToChar(request);
         }
 
@@ -95,18 +99,14 @@ namespace DDOServer
 
                 while (true)
                 {
-                    map.SpawnMonster();
                     direction = RecieveDirection(sockets[0]);
                     map.MovePlayer(direction, players[0].Name);
-                    map.SpawnHealthPotion();
                     mapStr = map.MapToString();
                     SendMap(sockets, mapStr);
                     SendPlayerInfo(sockets, players);
 
-                    map.SpawnMonster();
                     direction = RecieveDirection(sockets[1]);
                     map.MovePlayer(direction, players[1].Name);
-                    map.SpawnHealthPotion();
                     mapStr = map.MapToString();
                     SendMap(sockets, mapStr);
                     SendPlayerInfo(sockets, players);
