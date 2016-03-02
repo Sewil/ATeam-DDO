@@ -270,31 +270,31 @@ namespace DDOServer
             }
             return null;
         }
-        public void MovePlayer(char direction, string playerName)
+        public void MovePlayer(string direction, string playerName)
         {
             var currentCell = FindPlayer(playerName);
             Cell newCell = null;
             switch (direction)
             {
-                case '↑':
+                case "↑":
                     if (currentCell.Y > 0)
                     {
                         newCell = Cells[currentCell.Y - 1, currentCell.X];
                     }
                     break;
-                case '→':
+                case "→":
                     if (currentCell.X < WIDTH - 1)
                     {
                         newCell = Cells[currentCell.Y, currentCell.X + 1];
                     }
                     break;
-                case '↓':
+                case "↓":
                     if (currentCell.Y < HEIGHT - 1)
                     {
                         newCell = Cells[currentCell.Y + 1, currentCell.X];
                     }
                     break;
-                case '←':
+                case "←":
                     if (currentCell.X > 0)
                     {
                         newCell = Cells[currentCell.Y, currentCell.X - 1];

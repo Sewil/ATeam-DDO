@@ -7,195 +7,219 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using DDODatabase;
+using DDOProtocol;
+using Newtonsoft.Json;
 
-namespace DDOServer
-{
-    public class DDOServer
-    {
+namespace DDOServer {
+    class Client {
+        public Socket Socket { get; set; }
+        public bool IsLoggedIn { get { return Account != null; } }
+        public bool HasSelectedPlayer { get { return SelectedPlayer != null; } }
+        public Account Account { get; set; }
+        public DDODatabase.Player SelectedPlayer { get; set; }
+    }
+    public class DDOServer {
+        static object locker = new object();
         public static ATeamDB db = new ATeamDB();
-        static int serverID;
-        static Socket socket = null;
-        const int BUFFERLENGTH = 100;
-        const Int32 LISTENERBACKLOG = 100;
-        const Int32 BUFFERLENGTHMAP = 2000;
-        const int BUFFERLENGTHPLAYER = 100;
-        const String IPADDRESS = "127.0.0.1";
-        static Int32 PORT;
-        static IPAddress ipAddress = IPAddress.Parse(IPADDRESS);
-        static IPEndPoint localEndPoint;
-        static UTF8Encoding encoding = new UTF8Encoding();
-        static IPEndPoint remoteEndPoint = new IPEndPoint(ipAddress, 8000);
+        const int LISTENER_BACKLOG = 100;
+        //static Socket masterServer = null;
+        static Socket server = null;
+        static IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+        static IPEndPoint serverEndPoint = new IPEndPoint(ipAddress, 8001);
+        static IPEndPoint masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
+        static Protocol protocol = null;
+        static List<Client> clients = new List<Client>();
+        static bool gameStarted = false;
+        static string mapStr = null;
+        static Map map = null;
+        static void Main(string[] args) {
+            ConnectToMasterServer();
+            try {
+                server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                server.Bind(serverEndPoint);
+                server.Listen(LISTENER_BACKLOG);
+                protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 100);
 
-        static void ReceiveStartRequest(Socket socket, out string name)
-        {
-            name = null;
+                new Thread(new ParameterizedThreadStart(AcceptClients)).Start();
+                new Thread(new ParameterizedThreadStart(ListenToClientRequests)).Start();
+                while (true) {
 
-            byte[] bufferIn = new Byte[BUFFERLENGTHMAP];
-            socket.Receive(bufferIn);
-
-            string request = encoding.GetString(bufferIn).TrimEnd('\0').Trim();
-            Console.WriteLine("Received request from " + socket.RemoteEndPoint + ": " + request);
-
-            name = request.Split(' ')[2];
-        }
-
-        static char RecieveDirection(Socket socket)
-        {
-            byte[] bufferIn = new Byte[BUFFERLENGTHMAP];
-            socket.Receive(bufferIn);
-
-            string request = encoding.GetString(bufferIn).TrimEnd('\0').Trim();
-            Console.WriteLine("Received request from " + socket.RemoteEndPoint + ": " + request);
-
-            return Convert.ToChar(request);
-        }
-
-        static void SendMap(Socket[] sockets, string mapStr)
-        {
-            byte[] bufferOut = encoding.GetBytes(mapStr);
-            foreach (var socket in sockets)
-            {
-                socket.Send(bufferOut);
-            }
-        }
-
-        static void SendPlayerInfo(Socket[] sockets, params Player[] players)
-        {
-            string response = null;
-            byte[] bufferOut = new Byte[BUFFERLENGTHPLAYER];
-
-            for (int i = 0; i < players.Length; i++)
-            {
-                response = ($"Name: {players[i].Name} Health: {players[i].Health} Damage: {players[i].Damage} Gold: {players[i].Gold}");
-                bufferOut = encoding.GetBytes(response);
-                sockets[i].Send(bufferOut);
-            }
-        }
-
-        static void PlayDDO(object parameter)
-        {
-            Socket[] sockets = (Socket[])parameter;
-            string playerOneName = null;
-            string playerTwoName = null;
-            Map map = null;
-            string mapStr = null;
-            char direction;
-
-
-            try
-            {
-                ReceiveStartRequest(sockets[0], out playerOneName);
-                ReceiveStartRequest(sockets[1], out playerTwoName);
-
-                var players = new Player[sockets.Length];
-                players[0] = new Player(playerOneName);
-                players[1] = new Player(playerTwoName);
-
-                map = Map.Load(players);
-                mapStr = map.MapToString();
-
-                SendMap(sockets, mapStr);
-                SendPlayerInfo(sockets, players);
-
-                while (true)
-                {
-                    direction = RecieveDirection(sockets[0]);
-                    map.MovePlayer(direction, players[0].Name);
-                    mapStr = map.MapToString();
-                    SendMap(sockets, mapStr);
-                    SendPlayerInfo(sockets, players);
-
-                    direction = RecieveDirection(sockets[1]);
-                    map.MovePlayer(direction, players[1].Name);
-                    mapStr = map.MapToString();
-                    SendMap(sockets, mapStr);
-                    SendPlayerInfo(sockets, players);
+                }
+            } catch (Exception exception) {
+                Console.WriteLine(exception.Message);
+                Console.ReadLine();
+            } finally {
+                if (server != null) {
+                    server.Close();
                 }
             }
-            catch (Exception exception)
-            {
-                Console.WriteLine("Exception: " + exception.Message);
-                Console.WriteLine("Stack trace: " + exception.StackTrace);
-                Console.ReadLine();
-            }
-
-            finally
-            {
-                if (sockets[0] != null)
-                    sockets[0].Close();
-                if (sockets[1] != null)
-                    sockets[1].Close();
+        }
+        static Response HandleClientRequest(Client client, Request request) {
+            switch (request.Status) {
+                case RequestStatus.LOGIN: return Login(client, request);
+                case RequestStatus.GET_MAP: return GetMap(client, request);
+                case RequestStatus.GET_PLAYER: return GetPlayerInfo(client, request);
+                case RequestStatus.START: return StartGame(client, request);
+                case RequestStatus.GET_ACCOUNT_PLAYERS: return GetAccountPlayers(client, request);
+                case RequestStatus.SELECT_PLAYER: return SelectPlayer(client, request);
+                default: return null;
             }
         }
 
-        static void ConnectToMasterServer()
-        {
-            socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            socket.Connect(remoteEndPoint);
+        static Response SelectPlayer(Client client, Request request) {
+            if (request.Status == RequestStatus.SELECT_PLAYER && request.DataType == DataType.JSON) {
+                if (client.IsLoggedIn) {
+                    client.SelectedPlayer = JsonConvert.DeserializeObject<DDODatabase.Player>(request.Data);
+                    return new Response(ResponseStatus.OK);
+                } else {
+                    return new Response(ResponseStatus.UNAUTHORIZED);
+                }
+            } else {
+                return new Response(ResponseStatus.BAD_REQUEST);
+            }
+        }
+
+        static Response GetAccountPlayers(Client client, Request request) {
+            if (request.Status == RequestStatus.GET_ACCOUNT_PLAYERS && client.IsLoggedIn) {
+                if (db.Players.Any(p => p.AccountId == client.Account.Id)) {
+                    DDODatabase.Player[] players = db.Players.Where(p => p.Account == client.Account).ToArray();
+                    return new Response(ResponseStatus.OK, JsonConvert.SerializeObject(players), DataType.JSON);
+                } else {
+                    return new Response(ResponseStatus.NOT_FOUND);
+                }
+            } else {
+                return null;
+            }
+        }
+        static void ListenToClientRequests(object arg) {
+            Console.WriteLine("Listening to client requests...");
+            while (true) {
+                var clientsTemp = clients;
+                var protocolTemp = protocol;
+                // to avoid dangerous stuff and increase async
+
+                foreach (var client in clientsTemp) {
+                    protocolTemp.Socket = client.Socket;
+                    var transfer = protocolTemp.Receive();
+                    if (transfer != null) {
+                        Console.WriteLine(protocolTemp.GetMessage(transfer));
+                        var response = HandleClientRequest(client, (Request)transfer);
+                        if (response != null) {
+                            Console.WriteLine(protocolTemp.GetMessage(response));
+                            protocolTemp.Send(response);
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            //Console.WriteLine("Stopped listening to client requests...");
+        }
+        static void AcceptClients(object arg) {
+            Console.WriteLine("Accepting clients...");
+            while (clients.Count < 2) {
+                var socket = server.Accept();
+                var client = new Client {
+                    Socket = socket
+                };
+                clients.Add(client);
+                Console.WriteLine($"Client accepted ({client.Socket.AddressFamily.ToString()})");
+            }
+            Console.WriteLine("No longer accepting clients. Limit reached.");
+        }
+        static Response StartGame(Client client, Request request) {
+            if (request.Status == RequestStatus.START) {
+                if (clients.Count >= 2) {
+                    gameStarted = true;
+                    LoadMap();
+                    return new Response(ResponseStatus.OK, "");
+                } else {
+                    return new Response(ResponseStatus.NOT_READY, "");
+                }
+            } else {
+                return null;
+            }
+        }
+        static Response Login(Client client, Request request) {
+            if (request.Status == RequestStatus.LOGIN) {
+                string message = request.Data;
+                string username = message.Split(' ')[0];
+                Account account = db.Accounts.SingleOrDefault(u => u.Username == username);
+                if (account != null) {
+                    string password = message.Split(' ')[1];
+                    if (account.Password == password) {
+                        client.Account = account;
+                        return new Response(ResponseStatus.OK, $"LOGIN ACCEPTED FOR {username}");
+                    } else {
+                        return new Response(ResponseStatus.UNAUTHORIZED, $"WRONG PASSWORD FOR {username}");
+                    }
+                } else {
+                    return new Response(ResponseStatus.NOT_FOUND, $"{username} DOES NOT EXIST");
+                }
+            } else {
+                return null;
+            }
+        }
+        static Response GetPlayerInfo(Client client, Request request) {
+            if (request.Status == RequestStatus.GET_PLAYER) {
+                if (client.IsLoggedIn && client.HasSelectedPlayer) {
+                    return new Response(ResponseStatus.OK, JsonConvert.SerializeObject(client.SelectedPlayer), DataType.JSON);
+                } else {
+                    return new Response(ResponseStatus.UNAUTHORIZED);
+                }
+            } else {
+                return null;
+            }
+        }
+        static Response MovePlayer(Client client, Request request) {
+            if (request.Status == RequestStatus.MOVE && gameStarted) {
+                if (client.IsLoggedIn && client.HasSelectedPlayer) {
+                    map.MovePlayer(request.Data, client.SelectedPlayer.Name);
+                    return new Response(ResponseStatus.OK, "");
+                } else {
+                    return new Response(ResponseStatus.UNAUTHORIZED);
+                }
+            } else {
+                return null;
+            }
+        }
+        static Response GetMap(Client client, Request request) {
+            if (request.Status == RequestStatus.GET_MAP && gameStarted) {
+                return new Response(ResponseStatus.OK, mapStr);
+            } else {
+                return new Response(ResponseStatus.NOT_READY, "GAME NOT STARTED");
+            }
+        }
+        static void ConnectToMasterServer() {
+            /*
+            doesn't quite work yet
+
+            masterServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            masterServer.Connect(masterServerEndPoint);
+            Protocol p = new Protocol("DDO/1.0", new UTF8Encoding(), 100, masterServer);
             Console.WriteLine("Connected to MasterServer.");
 
             // Låt master-servern veta att det är en server som ansluter
-            var request = "server";
-            byte[] bufferOut = encoding.GetBytes(request);
-            socket.Send(bufferOut);
+            p.Send(new Request(RequestStatus.NONE, "server"));
 
-            // Ta emot server-ID och Port från MasterServern
-            byte[] bufferIn = new Byte[BUFFERLENGTH];
-            socket.Receive(bufferIn);
-            string response = encoding.GetString(bufferIn).TrimEnd('\0');
-            var tokens = response.Split(' ');
+            var tokens = p.Receive().Data.Split(' ');
             serverID = int.Parse(tokens[0]);
-            PORT = int.Parse(tokens[1]);
 
             // Definiera localEndPoint med Porten vi fick från MasterServern
-            localEndPoint = new IPEndPoint(ipAddress, PORT);
+            serverEndPoint = new IPEndPoint(ipAddress, int.Parse(tokens[1]));
+            */
         }
-
-        static void Main(string[] args)
-        {
-            Socket listeningSocket = null;
-            Socket[] sockets = new Socket[2];
-            ConnectToMasterServer();
-
-            try
-            {
-                listeningSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                listeningSocket.Bind(localEndPoint);
-                while (true)
-                {
-                    listeningSocket.Listen(LISTENERBACKLOG);
-                    sockets[0] = listeningSocket.Accept();
-                    Console.WriteLine("Player 1 connected");
-
-                    string id1 = "1";
-                    byte[] bufferOut1 = encoding.GetBytes(id1);
-                    sockets[0].Send(bufferOut1);
-
-                    listeningSocket.Listen(LISTENERBACKLOG);
-                    sockets[1] = listeningSocket.Accept();
-                    Console.WriteLine("Player 2 connected");
-
-                    string id2 = "2";
-                    byte[] bufferOut2 = encoding.GetBytes(id2);
-                    sockets[1].Send(bufferOut2);
-
-                    ParameterizedThreadStart threadStart = new ParameterizedThreadStart(PlayDDO);
-                    Thread thread = new Thread(threadStart);
-                    thread.Start(sockets);
-                }
+        static void LoadMap() {
+            var clientsTemp = clients;
+            var players = new List<Player>();
+            foreach (var client in clientsTemp) {
+                var selectedPlayer = client.SelectedPlayer;
+                var player = new Player(selectedPlayer.Name);
+                players.Add(player);
             }
-
-            catch (Exception exception)
-            {
-                Console.WriteLine(exception.Message);
-                Console.ReadLine();
-            }
-
-            finally
-            {
-                if (listeningSocket != null)
-                    listeningSocket.Close();
-            }
+            map = Map.Load(players.ToArray());
+            mapStr = map.MapToString();
         }
     }
 }

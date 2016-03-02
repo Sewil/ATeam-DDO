@@ -75,9 +75,6 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>ATeamModel.edmx</DependentUpon>
     </Compile>
-    <Compile Include="Map.cs">
-      <DependentUpon>ATeamModel.tt</DependentUpon>
-    </Compile>
     <Compile Include="Player.cs">
       <DependentUpon>ATeamModel.tt</DependentUpon>
     </Compile>

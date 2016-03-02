@@ -4,15 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace DDOProtocol
-{
-    public class Response
-    {
-        public string Message { get; }
-        public ResponseType ResponseType { get; }
-        public Response(ResponseType responseType, string message)
-        {
-            ResponseType = responseType;
+namespace DDOProtocol {
+    public class Response : Transfer {
+        public ResponseStatus Status { get; }
+        public Response(ResponseStatus status, string data = null, DataType dataType = DataType.TEXT) : base(data, dataType) {
+            Method = TransferMethod.RESPONSE;
+            Status = status;
         }
     }
 }

@@ -6,9 +6,10 @@
     <edmx:Diagrams>
       <Diagram DiagramId="6b962407c47e4bcb83aeecea348a418a" Name="Diagram1">
         <EntityTypeShape EntityType="ATeamModel.Account" Width="1.5" PointX="0.75" PointY="0.75" IsExpanded="true" />
-        <EntityTypeShape EntityType="ATeamModel.Map" Width="1.5" PointX="2.75" PointY="0.75" IsExpanded="true" />
-        <EntityTypeShape EntityType="ATeamModel.Player" Width="1.5" PointX="0.75" PointY="3.75" IsExpanded="true" />
-        <EntityTypeShape EntityType="ATeamModel.Stat" Width="1.5" PointX="2.75" PointY="3.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="ATeamModel.Player" Width="1.5" PointX="7.25" PointY="1.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="ATeamModel.Stat" Width="1.5" PointX="5.125" PointY="1.25" IsExpanded="true" />
+        <AssociationConnector Association="ATeamModel.AccountPlayer" />
+        <AssociationConnector Association="ATeamModel.FK__Player__AccountI__34C8D9D1" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>
