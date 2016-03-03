@@ -5,6 +5,7 @@
         RESPONSE
     }
     public enum DataType {
+        NONE,
         TEXT,
         JSON,
         XML

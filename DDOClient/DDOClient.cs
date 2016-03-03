@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using DDODatabase;
 using DDOProtocol;
@@ -28,16 +29,19 @@ namespace DDOClient {
                     break;
                 } catch {
                     Console.WriteLine("Connection failed. Trying again...");
-        }
-        }
+                }
+            }
 
             if (connected) {
                 Console.Clear();
                 Login();
-                
+
                 Player player = SelectPlayer();
-                if(player != null) {
-                    TryStartGame();
+                if (player != null) {
+                    Console.WriteLine("Waiting for players...");
+                    while (WaitingForPlayers()) {
+                        Thread.Sleep(5000);
+                    }
                     string map = ReceiveMap();
                     DrawMap(map);
                     Console.WriteLine(player);
@@ -47,7 +51,7 @@ namespace DDOClient {
                             map = ReceiveMap();
                         } else if (turn % 2 == 0) {
                             map = ReceiveMap();
-        }
+                        }
                         player = GetPlayer();
                         turn++;
                         DrawMap(map);
@@ -71,7 +75,7 @@ namespace DDOClient {
                 Console.Write("Password: ");
                 string password = Console.ReadLine();
 
-                protocol.Send(new Request(RequestStatus.LOGIN, $"{username} {password}"));
+                protocol.Send(new Request(RequestStatus.LOGIN, DataType.TEXT, $"{username} {password}"));
                 response = (Response)protocol.Receive();
 
                 Console.WriteLine(response.Status);
@@ -85,12 +89,12 @@ namespace DDOClient {
             if (r.Status == ResponseStatus.OK && r.DataType == DataType.JSON) {
                 var players = JsonConvert.DeserializeObject<Player[]>(r.Data);
                 for (int i = 0; i < players.Length; i++) {
-                    Console.WriteLine($"{i + 1} - {players[i].Name}");
+                    Console.WriteLine($"{i} - {players[i].Name}");
                 }
                 Console.WriteLine("Type in the number of your player: ");
                 Player player = players[int.Parse(Console.ReadLine())];
-                protocol.Send(new Request(RequestStatus.SELECT_PLAYER, JsonConvert.SerializeObject(player), DataType.JSON));
-                if((protocol.Receive() as Response).Status == ResponseStatus.OK) {
+                protocol.Send(new Request(RequestStatus.SELECT_PLAYER, DataType.JSON, JsonConvert.SerializeObject(player)));
+                if ((protocol.Receive() as Response).Status == ResponseStatus.OK) {
                     return player;
                 }
             } else {
@@ -99,29 +103,27 @@ namespace DDOClient {
 
             return null;
         }
-        static void TryStartGame() {
+        static bool WaitingForPlayers() {
             protocol.Send(new Request(RequestStatus.START));
             var response = (Response)protocol.Receive();
-            if (response.Status == ResponseStatus.OK) {
-                Console.WriteLine("Game started");
-            }
+            return response.Status != ResponseStatus.OK;
         }
         static void MovePlayer(ConsoleKey key) {
             switch (key) {
                 case ConsoleKey.UpArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, "↑"));
+                    protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "↑"));
                     break;
 
                 case ConsoleKey.RightArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, "→"));
+                    protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "→"));
                     break;
 
                 case ConsoleKey.DownArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, "↓"));
+                    protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "↓"));
                     break;
 
                 case ConsoleKey.LeftArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, "←"));
+                    protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "←"));
                     break;
             }
         }

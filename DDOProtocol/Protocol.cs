@@ -18,32 +18,35 @@ namespace DDOProtocol {
             Socket = socket;
         }
         public Transfer Receive(int msgSizeOverride = 0) {
-            if(msgSizeOverride == 0) {
+            if (msgSizeOverride == 0) {
                 msgSizeOverride = MsgSize;
             }
 
             byte[] bufferIn = new byte[msgSizeOverride];
             Socket.Receive(bufferIn);
             string receivedMessage = Encoding.GetString(bufferIn).TrimEnd('\0');
-            if(receivedMessage.Length > 0) {
+
+            if (receivedMessage.Length > 0) {
                 string[] attributes = receivedMessage.Split(' ');
                 TransferMethod method = (TransferMethod)Enum.Parse(typeof(TransferMethod), attributes[0]);
+                DataType dataType = (DataType)Enum.Parse(typeof(DataType), attributes[1]);
 
                 string message = string.Empty;
-                if (attributes.Length >= 4) {
-                    for (int i = 3; i < attributes.Length; i++) {
-                        if(i > 3) {
+                if (attributes.Length >= 5) {
+                    for (int i = 4; i < attributes.Length; i++) {
+                        if (i > 4) {
                             message += " ";
                         }
                         message += attributes[i];
                     }
                 }
+
                 if (method == TransferMethod.REQUEST) {
-                    RequestStatus status = (RequestStatus)Enum.Parse(typeof(RequestStatus), attributes[2]);
-                    return new Request(status, message);
+                    RequestStatus status = (RequestStatus)Enum.Parse(typeof(RequestStatus), attributes[3]);
+                    return new Request(status, dataType, message);
                 } else if (method == TransferMethod.RESPONSE) {
-                    ResponseStatus status = (ResponseStatus)Enum.Parse(typeof(ResponseStatus), attributes[2]);
-                    return new Response(status, message);
+                    ResponseStatus status = (ResponseStatus)Enum.Parse(typeof(ResponseStatus), attributes[3]);
+                    return new Response(status, dataType, message);
                 } else {
                     throw new ArgumentException("Couldn't receive invalid string.");
                 }
@@ -54,17 +57,15 @@ namespace DDOProtocol {
         public string GetMessage(Transfer transfer) {
             string message = string.Empty;
             if (transfer.Method == TransferMethod.REQUEST) {
-                message = $"{transfer.Method} {Name} {(transfer as Request).Status} {transfer.Data}";
+                message = $"{transfer.Method} {transfer.DataType} {Name} {(transfer as Request).Status} {transfer.Data}";
             } else { // response
-                message = $"{transfer.Method} {Name} {(transfer as Response).Status} {transfer.Data}";
+                message = $"{transfer.Method} {transfer.DataType} {Name} {(transfer as Response).Status} {transfer.Data}";
             }
 
             return message;
         }
         public void Send(Transfer transfer) {
-            string message = GetMessage(transfer);
-            byte[] bufferOut = Encoding.GetBytes(message);
-            Socket.Send(bufferOut);
+            Socket.Send(Encoding.GetBytes(GetMessage(transfer)));
         }
     }
 }

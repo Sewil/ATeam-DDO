@@ -4,7 +4,7 @@
   <edmx:Runtime>
     <!-- SSDL content -->
     <edmx:StorageModels>
-      <Schema Namespace="ATeamModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
+    <Schema Namespace="ATeamModel.Store" Provider="System.Data.SqlClient" ProviderManifestToken="2012" Alias="Self" xmlns:store="http://schemas.microsoft.com/ado/2007/12/edm/EntityStoreSchemaGenerator" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm/ssdl">
         <EntityType Name="Account">
           <Key>
             <PropertyRef Name="Id" />
@@ -32,7 +32,7 @@
           <Property Name="Name" Type="nvarchar" MaxLength="50" Nullable="false" />
           <Property Name="Value" Type="nvarchar" MaxLength="50" Nullable="false" />
         </EntityType>
-        <Association Name="FK__Player__AccountI__34C8D9D1">
+        <Association Name="FK__Player__AccountI__1A14E395">
           <End Role="Account" Type="Self.Account" Multiplicity="1" />
           <End Role="Player" Type="Self.Player" Multiplicity="*" />
           <ReferentialConstraint>
@@ -48,13 +48,12 @@
           <EntitySet Name="Account" EntityType="Self.Account" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Player" EntityType="Self.Player" Schema="dbo" store:Type="Tables" />
           <EntitySet Name="Stat" EntityType="Self.Stat" Schema="dbo" store:Type="Tables" />
-          <AssociationSet Name="FK__Player__AccountI__34C8D9D1" Association="Self.FK__Player__AccountI__34C8D9D1">
+          <AssociationSet Name="FK__Player__AccountI__1A14E395" Association="Self.FK__Player__AccountI__1A14E395">
             <End Role="Account" EntitySet="Account" />
             <End Role="Player" EntitySet="Player" />
           </AssociationSet>
         </EntityContainer>
-      </Schema>
-    </edmx:StorageModels>
+      </Schema></edmx:StorageModels>
     <!-- CSDL content -->
     <edmx:ConceptualModels>
       <Schema Namespace="ATeamModel" Alias="Self" annotation:UseStrongSpatialTypes="false" xmlns:annotation="http://schemas.microsoft.com/ado/2009/02/edm/annotation" xmlns:customannotation="http://schemas.microsoft.com/ado/2013/11/edm/customannotation" xmlns="http://schemas.microsoft.com/ado/2009/11/edm">

@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 namespace DDOProtocol {
     public class Request : Transfer {
         public RequestStatus Status { get; }
-        public Request(RequestStatus status, string data = null, DataType dataType = DataType.TEXT) : base(data, dataType) {
+        public Request(RequestStatus status, DataType dataType = DataType.NONE, string data = null) : base(dataType, data) {
             Method = TransferMethod.REQUEST;
             Status = status;
         }

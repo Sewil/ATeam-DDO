@@ -9,9 +9,9 @@ namespace DDOProtocol {
         public string Data { get; }
         public DataType DataType { get; }
         public TransferMethod Method { get; protected set; }
-        public Transfer(string data = null, DataType dataType = DataType.TEXT) {
-            Data = data;
+        public Transfer(DataType dataType = DataType.NONE, string data = null) {
             DataType = dataType;
+            Data = data;
         }
     }
 }

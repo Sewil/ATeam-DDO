@@ -17,6 +17,15 @@ namespace DDOServer {
         public bool HasSelectedPlayer { get { return SelectedPlayer != null; } }
         public Account Account { get; set; }
         public DDODatabase.Player SelectedPlayer { get; set; }
+        public string IPAddress {
+            get {
+                if (Socket != null) {
+                    return Socket.LocalEndPoint.ToString();
+                } else {
+                    return null;
+                }
+            }
+        }
     }
     public class DDOServer {
         static object locker = new object();
@@ -27,7 +36,6 @@ namespace DDOServer {
         static IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
         static IPEndPoint serverEndPoint = new IPEndPoint(ipAddress, 8001);
         static IPEndPoint masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
-        static Protocol protocol = null;
         static List<Client> clients = new List<Client>();
         static bool gameStarted = false;
         static string mapStr = null;
@@ -38,7 +46,6 @@ namespace DDOServer {
                 server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 server.Bind(serverEndPoint);
                 server.Listen(LISTENER_BACKLOG);
-                protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 100);
 
                 new Thread(new ParameterizedThreadStart(AcceptClients)).Start();
                 new Thread(new ParameterizedThreadStart(ListenToClientRequests)).Start();
@@ -82,8 +89,10 @@ namespace DDOServer {
         static Response GetAccountPlayers(Client client, Request request) {
             if (request.Status == RequestStatus.GET_ACCOUNT_PLAYERS && client.IsLoggedIn) {
                 if (db.Players.Any(p => p.AccountId == client.Account.Id)) {
-                    DDODatabase.Player[] players = db.Players.Where(p => p.Account == client.Account).ToArray();
-                    return new Response(ResponseStatus.OK, JsonConvert.SerializeObject(players), DataType.JSON);
+                    var players = db.Players.Where(p => p.AccountId == client.Account.Id).Select(p => new {
+                        AccountId = p.AccountId, Damage = p.Damage, Gold = p.Gold, Health = p.Health, Id = p.Id, Name = p.Name
+                    }).ToArray();
+                    return new Response(ResponseStatus.OK, DataType.JSON, JsonConvert.SerializeObject(players));
                 } else {
                     return new Response(ResponseStatus.NOT_FOUND);
                 }
@@ -93,21 +102,23 @@ namespace DDOServer {
         }
         static void ListenToClientRequests(object arg) {
             Console.WriteLine("Listening to client requests...");
+            var protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 500);
             while (true) {
-                if(clients.Count > 0) {
+                if (clients.Count > 0) {
                     var clientsTemp = clients.ToArray();
-                    var protocolTemp = protocol;
                     // to avoid dangerous stuff and increase async
 
                     foreach (var client in clientsTemp) {
-                        protocolTemp.Socket = client.Socket;
-                        var transfer = protocolTemp.Receive();
+                        protocol.Socket = client.Socket;
+                        var transfer = protocol.Receive();
                         if (transfer != null) {
-                            Console.WriteLine(protocolTemp.GetMessage(transfer));
+                            Console.Write($"[SERVER <-- {client.IPAddress}]\t");
+                            Console.WriteLine(protocol.GetMessage(transfer));
                             var response = HandleClientRequest(client, (Request)transfer);
                             if (response != null) {
-                                Console.WriteLine(protocolTemp.GetMessage(response));
-                                protocolTemp.Send(response);
+                                Console.Write($"[SERVER --> {client.IPAddress}]\t");
+                                Console.WriteLine(protocol.GetMessage(response));
+                                protocol.Send(response);
                             }
 
                             break;
@@ -126,7 +137,7 @@ namespace DDOServer {
                     Socket = socket
                 };
                 clients.Add(client);
-                Console.WriteLine($"Client accepted ({client.Socket.AddressFamily.ToString()})");
+                Console.WriteLine($"Client accepted ({client.IPAddress})");
             }
             Console.WriteLine("No longer accepting clients. Limit reached.");
         }
@@ -135,9 +146,9 @@ namespace DDOServer {
                 if (clients.Count >= 2) {
                     gameStarted = true;
                     LoadMap();
-                    return new Response(ResponseStatus.OK, "");
+                    return new Response(ResponseStatus.OK);
                 } else {
-                    return new Response(ResponseStatus.NOT_READY, "");
+                    return new Response(ResponseStatus.NOT_READY);
                 }
             } else {
                 return null;
@@ -152,12 +163,12 @@ namespace DDOServer {
                     string password = message.Split(' ')[1];
                     if (account.Password == password) {
                         client.Account = account;
-                        return new Response(ResponseStatus.OK, $"LOGIN ACCEPTED FOR {username}");
+                        return new Response(ResponseStatus.OK, DataType.TEXT, $"LOGIN ACCEPTED FOR {username}");
                     } else {
-                        return new Response(ResponseStatus.UNAUTHORIZED, $"WRONG PASSWORD FOR {username}");
+                        return new Response(ResponseStatus.UNAUTHORIZED, DataType.TEXT, $"WRONG PASSWORD {password}|");
                     }
                 } else {
-                    return new Response(ResponseStatus.NOT_FOUND, $"{username} DOES NOT EXIST");
+                    return new Response(ResponseStatus.NOT_FOUND, DataType.TEXT, $"{username} DOES NOT EXIST");
                 }
             } else {
                 return null;
@@ -166,7 +177,7 @@ namespace DDOServer {
         static Response GetPlayerInfo(Client client, Request request) {
             if (request.Status == RequestStatus.GET_PLAYER) {
                 if (client.IsLoggedIn && client.HasSelectedPlayer) {
-                    return new Response(ResponseStatus.OK, JsonConvert.SerializeObject(client.SelectedPlayer), DataType.JSON);
+                    return new Response(ResponseStatus.OK, DataType.JSON, JsonConvert.SerializeObject(client.SelectedPlayer));
                 } else {
                     return new Response(ResponseStatus.UNAUTHORIZED);
                 }
@@ -178,7 +189,7 @@ namespace DDOServer {
             if (request.Status == RequestStatus.MOVE && gameStarted) {
                 if (client.IsLoggedIn && client.HasSelectedPlayer) {
                     map.MovePlayer(request.Data, client.SelectedPlayer.Name);
-                    return new Response(ResponseStatus.OK, "");
+                    return new Response(ResponseStatus.OK);
                 } else {
                     return new Response(ResponseStatus.UNAUTHORIZED);
                 }
@@ -188,9 +199,9 @@ namespace DDOServer {
         }
         static Response GetMap(Client client, Request request) {
             if (request.Status == RequestStatus.GET_MAP && gameStarted) {
-                return new Response(ResponseStatus.OK, mapStr);
+                return new Response(ResponseStatus.OK, DataType.TEXT, mapStr);
             } else {
-                return new Response(ResponseStatus.NOT_READY, "GAME NOT STARTED");
+                return new Response(ResponseStatus.NOT_READY, DataType.TEXT, "GAME NOT STARTED");
             }
         }
         static void ConnectToMasterServer() {
@@ -216,8 +227,10 @@ namespace DDOServer {
             var clientsTemp = clients;
             var players = new List<Player>();
             foreach (var client in clientsTemp) {
-                var selectedPlayer = client.SelectedPlayer;
-                var player = new Player(selectedPlayer.Name);
+                var sp = client.SelectedPlayer;
+                var player = new Player(sp.Name) {
+                    Damage = sp.Damage, Gold = sp.Gold, Health = sp.Health
+                };
                 players.Add(player);
             }
             map = Map.Load(players.ToArray());
