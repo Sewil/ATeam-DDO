@@ -94,22 +94,24 @@ namespace DDOServer {
         static void ListenToClientRequests(object arg) {
             Console.WriteLine("Listening to client requests...");
             while (true) {
-                var clientsTemp = clients;
-                var protocolTemp = protocol;
-                // to avoid dangerous stuff and increase async
+                if(clients.Count > 0) {
+                    var clientsTemp = clients.ToArray();
+                    var protocolTemp = protocol;
+                    // to avoid dangerous stuff and increase async
 
-                foreach (var client in clientsTemp) {
-                    protocolTemp.Socket = client.Socket;
-                    var transfer = protocolTemp.Receive();
-                    if (transfer != null) {
-                        Console.WriteLine(protocolTemp.GetMessage(transfer));
-                        var response = HandleClientRequest(client, (Request)transfer);
-                        if (response != null) {
-                            Console.WriteLine(protocolTemp.GetMessage(response));
-                            protocolTemp.Send(response);
+                    foreach (var client in clientsTemp) {
+                        protocolTemp.Socket = client.Socket;
+                        var transfer = protocolTemp.Receive();
+                        if (transfer != null) {
+                            Console.WriteLine(protocolTemp.GetMessage(transfer));
+                            var response = HandleClientRequest(client, (Request)transfer);
+                            if (response != null) {
+                                Console.WriteLine(protocolTemp.GetMessage(response));
+                                protocolTemp.Send(response);
+                            }
+
+                            break;
                         }
-
-                        break;
                     }
                 }
             }

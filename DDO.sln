@@ -15,6 +15,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOMasterServer", "DDOMaste
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOProtocol", "DDOProtocol\DDOProtocol.csproj", "{D4E49804-188B-4707-BFC3-1469FA75658B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOTests", "DDOTests\DDOTests.csproj", "{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -45,6 +47,10 @@ Global
 		{D4E49804-188B-4707-BFC3-1469FA75658B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D4E49804-188B-4707-BFC3-1469FA75658B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D4E49804-188B-4707-BFC3-1469FA75658B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

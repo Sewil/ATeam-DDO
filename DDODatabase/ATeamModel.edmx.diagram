@@ -4,12 +4,11 @@
   <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
     <!-- Diagram content (shape and connector positions) -->
     <edmx:Diagrams>
-      <Diagram DiagramId="6b962407c47e4bcb83aeecea348a418a" Name="Diagram1">
-        <EntityTypeShape EntityType="ATeamModel.Account" Width="1.5" PointX="0.75" PointY="0.75" IsExpanded="true" />
-        <EntityTypeShape EntityType="ATeamModel.Player" Width="1.5" PointX="7.25" PointY="1.5" IsExpanded="true" />
-        <EntityTypeShape EntityType="ATeamModel.Stat" Width="1.5" PointX="5.125" PointY="1.25" IsExpanded="true" />
-        <AssociationConnector Association="ATeamModel.AccountPlayer" />
-        <AssociationConnector Association="ATeamModel.FK__Player__AccountI__34C8D9D1" />
+      <Diagram DiagramId="97619a40f7be49b6b99efab38e1a24b4" Name="Diagram1">
+        <EntityTypeShape EntityType="ATeamModel.Account" Width="1.5" PointX="0.75" PointY="1.25" IsExpanded="true" />
+        <EntityTypeShape EntityType="ATeamModel.Player" Width="1.5" PointX="3" PointY="1" IsExpanded="true" />
+        <EntityTypeShape EntityType="ATeamModel.Stat" Width="1.5" PointX="0.75" PointY="4.75" IsExpanded="true" />
+        <AssociationConnector Association="ATeamModel.FK__Player__AccountI__34C8D9D1" ManuallyRouted="false" />
       </Diagram>
     </edmx:Diagrams>
   </edmx:Designer>
