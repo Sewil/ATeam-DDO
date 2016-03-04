@@ -58,7 +58,7 @@
   <ItemGroup>
     <Compile Include="Cell.cs" />
     <Compile Include="Character.cs" />
-    <Compile Include="DDOServer.cs" />
+    <Compile Include="Program.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="HealthPotion.cs" />
     <Compile Include="Map.cs" />

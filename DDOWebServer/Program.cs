@@ -97,7 +97,7 @@ namespace SimpleWebServer
                 HttpListenerRequest request = context.Request;
                 HttpListenerResponse response = context.Response;
                 string responseString = $"<html><body><h2>Stats</h2><ul>";
-                foreach (var stat in DDOServer.DDOServer.db.Stats)
+                foreach (var stat in DDOServer.Program.db.Stats)
                 {
                     responseString += $"<li>{stat.Name}: {stat.Value}</li>";
                 }

@@ -11,9 +11,10 @@ using DDOProtocol;
 using Newtonsoft.Json;
 
 namespace DDOClient {
-    class DDOClient {
+
+    class Program {
         const int BUFFERLENGTHMAP = 2000;
-        static Socket server = null;
+        static Socket client = null;
         static IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8001);
         static int? turn = null;
         static Protocol protocol = null;
@@ -193,9 +194,9 @@ namespace DDOClient {
             }
         }
         static void ConnectToServer() {
-            server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            server.Connect(serverEndPoint);
-            protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 100, server);
+            client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            client.Connect(serverEndPoint);
+            protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 100, client);
         }
         static bool InputCorrect(ConsoleKey key) {
             return key == ConsoleKey.UpArrow || key == ConsoleKey.RightArrow || key == ConsoleKey.DownArrow || key == ConsoleKey.LeftArrow;

@@ -26,33 +26,29 @@ namespace DDOProtocol {
             Socket.Receive(bufferIn);
             string receivedMessage = Encoding.GetString(bufferIn).TrimEnd('\0');
 
-            if (receivedMessage.Length > 0) {
-                string[] attributes = receivedMessage.Split(' ');
-                TransferMethod method = (TransferMethod)Enum.Parse(typeof(TransferMethod), attributes[0]);
-                DataType dataType = (DataType)Enum.Parse(typeof(DataType), attributes[1]);
+            string[] attributes = receivedMessage.Split(' ');
+            TransferMethod method = (TransferMethod)Enum.Parse(typeof(TransferMethod), attributes[0]);
+            DataType dataType = (DataType)Enum.Parse(typeof(DataType), attributes[1]);
 
-                string message = string.Empty;
-                if (attributes.Length >= 5) {
-                    for (int i = 4; i < attributes.Length; i++) {
-                        if (i > 4) {
-                            message += " ";
-                        }
-                        message += attributes[i];
+            string message = string.Empty;
+            if (attributes.Length >= 5) {
+                for (int i = 4; i < attributes.Length; i++) {
+                    if (i > 4) {
+                        message += " ";
                     }
-                }
-
-                if (method == TransferMethod.REQUEST) {
-                    RequestStatus status = (RequestStatus)Enum.Parse(typeof(RequestStatus), attributes[3]);
-                    return new Request(status, dataType, message);
-                } else if (method == TransferMethod.RESPONSE) {
-                    ResponseStatus status = (ResponseStatus)Enum.Parse(typeof(ResponseStatus), attributes[3]);
-                    return new Response(status, dataType, message);
-                } else {
-                    throw new ArgumentException("Couldn't receive invalid string.");
+                    message += attributes[i];
                 }
             }
 
-            return null;
+            if (method == TransferMethod.REQUEST) {
+                RequestStatus status = (RequestStatus)Enum.Parse(typeof(RequestStatus), attributes[3]);
+                return new Request(status, dataType, message);
+            } else if (method == TransferMethod.RESPONSE) {
+                ResponseStatus status = (ResponseStatus)Enum.Parse(typeof(ResponseStatus), attributes[3]);
+                return new Response(status, dataType, message);
+            } else {
+                throw new ArgumentException("Couldn't receive invalid string.");
+            }
         }
         public string GetMessage(Transfer transfer) {
             string message = string.Empty;

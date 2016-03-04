@@ -3,7 +3,7 @@
 namespace DDOTests {
     [TestClass]
     class ServerTests {
-        static DDOServer.DDOServer server = new DDOServer.DDOServer();
+        static DDOServer.Program server = new DDOServer.Program();
 
         [TestMethod]
         public void ClientsOverflow() {

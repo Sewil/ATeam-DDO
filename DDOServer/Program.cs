@@ -11,24 +11,24 @@ using DDOProtocol;
 using Newtonsoft.Json;
 
 namespace DDOServer {
-    class Client {
-        public Socket Socket { get; set; }
-        public bool IsLoggedIn { get { return Account != null; } }
-        public bool HasSelectedPlayer { get { return SelectedPlayer != null; } }
-        public Account Account { get; set; }
-        public DDODatabase.Player SelectedPlayer { get; set; }
-        public string IPAddress {
-            get {
-                if (Socket != null) {
-                    return Socket.LocalEndPoint.ToString();
-                } else {
-                    return null;
+    public class Program {
+        class Client {
+            public bool IsHeard { get; set; }
+            public Socket Socket { get; set; }
+            public bool IsLoggedIn { get { return Account != null; } }
+            public bool HasSelectedPlayer { get { return SelectedPlayer != null; } }
+            public Account Account { get; set; }
+            public DDODatabase.Player SelectedPlayer { get; set; }
+            public string IPAddress {
+                get {
+                    if (Socket != null) {
+                        return Socket.RemoteEndPoint.ToString();
+                    } else {
+                        return null;
+                    }
                 }
             }
         }
-    }
-    public class DDOServer {
-        static object locker = new object();
         public static ATeamDB db = new ATeamDB();
         const int LISTENER_BACKLOG = 100;
         //static Socket masterServer = null;
@@ -41,14 +41,17 @@ namespace DDOServer {
         static string mapStr = null;
         static Map map = null;
         static void Main(string[] args) {
+
             ConnectToMasterServer();
             try {
                 server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 server.Bind(serverEndPoint);
                 server.Listen(LISTENER_BACKLOG);
 
-                new Thread(new ParameterizedThreadStart(AcceptClients)).Start();
-                new Thread(new ParameterizedThreadStart(ListenToClientRequests)).Start();
+                var t1 = new Thread(new ParameterizedThreadStart(AcceptClients));
+                t1.Start();
+                var t2 = new Thread(new ParameterizedThreadStart(ListenToClientRequests));
+                t2.Start();
                 while (true) {
 
                 }
@@ -103,25 +106,29 @@ namespace DDOServer {
         static void ListenToClientRequests(object arg) {
             Console.WriteLine("Listening to client requests...");
             var protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 500);
+            Client[] clientsTemp = null;
             while (true) {
                 if (clients.Count > 0) {
-                    var clientsTemp = clients.ToArray();
-                    // to avoid dangerous stuff and increase async
+                    clientsTemp = new Client[clients.Count];
+                    clients.CopyTo(clientsTemp);
 
                     foreach (var client in clientsTemp) {
-                        protocol.Socket = client.Socket;
-                        var transfer = protocol.Receive();
-                        if (transfer != null) {
-                            Console.Write($"[SERVER <-- {client.IPAddress}]\t");
-                            Console.WriteLine(protocol.GetMessage(transfer));
-                            var response = HandleClientRequest(client, (Request)transfer);
-                            if (response != null) {
-                                Console.Write($"[SERVER --> {client.IPAddress}]\t");
-                                Console.WriteLine(protocol.GetMessage(response));
-                                protocol.Send(response);
-                            }
-
-                            break;
+                        if (client != null && !client.IsHeard) {
+                            client.IsHeard = true;
+                            Console.WriteLine($"{client.IPAddress} not heard, listening...");
+                            new TaskFactory().StartNew(() => {
+                                protocol.Socket = client.Socket;
+                                var transfer = protocol.Receive();
+                                Console.Write($"[SERVER <-- {client.IPAddress}]\t");
+                                Console.WriteLine(protocol.GetMessage(transfer));
+                                var response = HandleClientRequest(client, (Request)transfer);
+                                if (response != null) {
+                                    Console.Write($"[SERVER --> {client.IPAddress}]\t");
+                                    Console.WriteLine(protocol.GetMessage(response));
+                                    protocol.Send(response);
+                                }
+                                client.IsHeard = false;
+                            });
                         }
                     }
                 }
@@ -133,13 +140,11 @@ namespace DDOServer {
             Console.WriteLine("Accepting clients...");
             while (clients.Count < 2) {
                 var socket = server.Accept();
-                var client = new Client {
-                    Socket = socket
-                };
+                var client = new Client { Socket = socket };
                 clients.Add(client);
                 Console.WriteLine($"Client accepted ({client.IPAddress})");
             }
-            Console.WriteLine("No longer accepting clients. Limit reached.");
+            Console.WriteLine($"No longer accepting clients. Limit of {clients.Count} reached.");
         }
         static Response StartGame(Client client, Request request) {
             if (request.Status == RequestStatus.START) {
