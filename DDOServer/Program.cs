@@ -33,6 +33,7 @@ namespace DDOServer {
         const int LISTENER_BACKLOG = 100;
         //static Socket masterServer = null;
         static Socket server = null;
+        static Socket masterServer = null;
         static IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
         static IPEndPoint serverEndPoint = new IPEndPoint(ipAddress, 8001);
         static IPEndPoint masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
@@ -41,7 +42,6 @@ namespace DDOServer {
         static string mapStr = null;
         static Map map = null;
         static void Main(string[] args) {
-
             ConnectToMasterServer();
             try {
                 server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
@@ -104,29 +104,26 @@ namespace DDOServer {
             }
         }
         static void ListenToClientRequests(object arg) {
-            Console.WriteLine("Listening to client requests...");
-            var protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 500);
-            Client[] clientsTemp = null;
+            Console.WriteLine($"{DateTime.Now}\tListening to client requests...");
             while (true) {
                 if (clients.Count > 0) {
-                    clientsTemp = new Client[clients.Count];
-                    clients.CopyTo(clientsTemp);
+                    var clientsTemp = clients.ToArray();
 
                     foreach (var client in clientsTemp) {
                         if (client != null && !client.IsHeard) {
                             client.IsHeard = true;
-                            Console.WriteLine($"{client.IPAddress} not heard, listening...");
                             new TaskFactory().StartNew(() => {
-                                protocol.Socket = client.Socket;
+                                var protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 500, client.Socket);
                                 var transfer = protocol.Receive();
-                                Console.Write($"[SERVER <-- {client.IPAddress}]\t");
+                                Console.Write($"{DateTime.Now}\t[{serverEndPoint} <-- {client.IPAddress}]\t");
                                 Console.WriteLine(protocol.GetMessage(transfer));
                                 var response = HandleClientRequest(client, (Request)transfer);
                                 if (response != null) {
-                                    Console.Write($"[SERVER --> {client.IPAddress}]\t");
+                                    Console.Write($"{DateTime.Now}\t[{serverEndPoint} --> {client.IPAddress}]\t");
                                     Console.WriteLine(protocol.GetMessage(response));
                                     protocol.Send(response);
                                 }
+
                                 client.IsHeard = false;
                             });
                         }
@@ -137,14 +134,15 @@ namespace DDOServer {
             //Console.WriteLine("Stopped listening to client requests...");
         }
         static void AcceptClients(object arg) {
-            Console.WriteLine("Accepting clients...");
-            while (clients.Count < 2) {
-                var socket = server.Accept();
-                var client = new Client { Socket = socket };
-                clients.Add(client);
-                Console.WriteLine($"Client accepted ({client.IPAddress})");
+            Console.WriteLine($"{DateTime.Now}\tAccepting clients...");
+            while (true) {
+                if (clients.Count < 2) {
+                    var socket = server.Accept();
+                    var client = new Client { Socket = socket };
+                    clients.Add(client);
+                    Console.WriteLine($"{DateTime.Now}\tClient accepted ({client.IPAddress})");
+                }
             }
-            Console.WriteLine($"No longer accepting clients. Limit of {clients.Count} reached.");
         }
         static Response StartGame(Client client, Request request) {
             if (request.Status == RequestStatus.START) {
@@ -170,7 +168,7 @@ namespace DDOServer {
                         client.Account = account;
                         return new Response(ResponseStatus.OK, DataType.TEXT, $"LOGIN ACCEPTED FOR {username}");
                     } else {
-                        return new Response(ResponseStatus.UNAUTHORIZED, DataType.TEXT, $"WRONG PASSWORD {password}|");
+                        return new Response(ResponseStatus.UNAUTHORIZED, DataType.TEXT, $"WRONG PASSWORD {password}");
                     }
                 } else {
                     return new Response(ResponseStatus.NOT_FOUND, DataType.TEXT, $"{username} DOES NOT EXIST");
@@ -210,23 +208,18 @@ namespace DDOServer {
             }
         }
         static void ConnectToMasterServer() {
-            /*
-            doesn't quite work yet
-
             masterServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             masterServer.Connect(masterServerEndPoint);
             Protocol p = new Protocol("DDO/1.0", new UTF8Encoding(), 100, masterServer);
-            Console.WriteLine("Connected to MasterServer.");
+            Console.WriteLine($"{DateTime.Now}\tConnected to MasterServer");
 
             // Låt master-servern veta att det är en server som ansluter
-            p.Send(new Request(RequestStatus.NONE, "server"));
+            p.Send(new Request(RequestStatus.NONE, DataType.TEXT, "im a server i promise"));
 
-            var tokens = p.Receive().Data.Split(' ');
-            serverID = int.Parse(tokens[0]);
-
-            // Definiera localEndPoint med Porten vi fick från MasterServern
-            serverEndPoint = new IPEndPoint(ipAddress, int.Parse(tokens[1]));
-            */
+            var r = p.Receive() as Response;
+            if (r.Status == ResponseStatus.OK) {
+                serverEndPoint = new IPEndPoint(ipAddress, int.Parse(r.Data));
+            }
         }
         static void LoadMap() {
             var clientsTemp = clients;

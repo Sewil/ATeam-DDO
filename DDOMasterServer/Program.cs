@@ -3,11 +3,10 @@ using System.Net.Sockets;
 using System.Text;
 using System.Collections.Generic;
 using System;
+using DDOProtocol;
 
-namespace DDOMasterServer
-{
-    class Program
-    {
+namespace DDOMasterServer {
+    class Program {
         const int LISTENERBACKLOG = 100;
         const int BUFFERLENGTHPLAYER = 100;
         const int BUFFERLENGTH = 100;
@@ -18,61 +17,48 @@ namespace DDOMasterServer
         static IPEndPoint localEndPoint = new IPEndPoint(ipAddress, PORT);
         static UTF8Encoding encoding = new UTF8Encoding();
 
-        static void Main(string[] args)
-        {
+        static void Main(string[] args) {
+            var protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 500);
             var serverList = new List<string>();
             Socket listeningSocket = null;
             Socket[] sockets = new Socket[15];
             int i = 0;
 
-            try
-            {
+            try {
                 listeningSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 listeningSocket.Bind(localEndPoint);
                 Console.WriteLine("MasterServer initialized");
 
-                while (true)
-                {
+                while (true) {
                     listeningSocket.Listen(LISTENERBACKLOG);
                     sockets[i] = listeningSocket.Accept();
-                    byte[] bufferIn = new Byte[BUFFERLENGTH];
-                    sockets[i].Receive(bufferIn);
-                    var request = encoding.GetString(bufferIn).TrimEnd('\0');
+                    protocol.Socket = sockets[i];
+                    var r = protocol.Receive();
 
-                    if (request.Equals("server"))
-                    {
+                    if (r.Data == "im a server i promise") {
                         Console.WriteLine($"Server {i} connected");
                         string idAndPort = i.ToString() + " " + clientPort;
-                        byte[] bufferOut = encoding.GetBytes(idAndPort);
-                        sockets[i].Send(bufferOut);
+                        protocol.Send(new Response(ResponseStatus.OK, DataType.TEXT, clientPort.ToString()));
                         serverList.Add(idAndPort);
                         i++;
                         clientPort++;
 
-                        foreach (var server in serverList)
-                        {
+                        foreach (var server in serverList) {
                             var info = server.Split(' ');
                             Console.WriteLine($"ServerID: {info[0]}     Port: {info[1]}");
                         }
-                    }
-                    else if (request.Equals("list"))
-                    {
+                    } else if (r.Data == "list") {
                         Console.WriteLine("Client connected");
-                        string response = "";
-                        foreach (var server in serverList)
-                        {
-                            response += " " + server;
+                        string data = "";
+                        foreach (var server in serverList) {
+                            data += " " + server;
                         }
 
-                        byte[] bufferOut = encoding.GetBytes(response);
-                        sockets[i].Send(bufferOut);
+                        protocol.Send(new Response(ResponseStatus.OK, DataType.TEXT, data));
                         i++;
                     }
                 }
-            }
-
-            catch (Exception exception)
-            {
+            } catch (Exception exception) {
                 Console.WriteLine(exception.Message);
                 Console.ReadLine();
             }
