@@ -12,6 +12,7 @@
     }
     public enum ResponseStatus {
         OK,
+        LIMIT_REACHED,
         UNAUTHORIZED,
         MOVE_BLOCKED,
         NOT_FOUND,

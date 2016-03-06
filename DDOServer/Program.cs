@@ -12,7 +12,7 @@ using Newtonsoft.Json;
 
 namespace DDOServer {
     public class Program {
-        class Client {
+        public class Client {
             public bool IsHeard { get; set; }
             public Socket Socket { get; set; }
             public bool IsLoggedIn { get { return Account != null; } }
@@ -31,13 +31,21 @@ namespace DDOServer {
         }
         public static ATeamDB db = new ATeamDB();
         const int LISTENER_BACKLOG = 100;
-        //static Socket masterServer = null;
         static Socket server = null;
         static Socket masterServer = null;
         static IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
         static IPEndPoint serverEndPoint = new IPEndPoint(ipAddress, 8001);
         static IPEndPoint masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
+
+        const int MAX_LOGGED_IN_CLIENTS = 2;
+        const int MAX_CONNECTED_CLIENTS = 10;
         static List<Client> clients = new List<Client>();
+        static IEnumerable<Client> LoggedInClients {
+            get {
+                return clients.Where(c => c.IsLoggedIn);
+            }
+        }
+
         static bool gameStarted = false;
         static string mapStr = null;
         static Map map = null;
@@ -136,7 +144,7 @@ namespace DDOServer {
         static void AcceptClients(object arg) {
             Console.WriteLine($"{DateTime.Now}\tAccepting clients...");
             while (true) {
-                if (clients.Count < 2) {
+                if (clients.Count < MAX_CONNECTED_CLIENTS) {
                     var socket = server.Accept();
                     var client = new Client { Socket = socket };
                     clients.Add(client);
@@ -158,24 +166,34 @@ namespace DDOServer {
             }
         }
         static Response Login(Client client, Request request) {
-            if (request.Status == RequestStatus.LOGIN) {
+            Response r = null;
+
+            if (request.Status != RequestStatus.LOGIN) {
+                r = new Response(ResponseStatus.BAD_REQUEST);
+            } else if (client.IsLoggedIn) {
+                r = new Response(ResponseStatus.BAD_REQUEST,DataType.TEXT, "CLIENT ALREADY LOGGED IN");
+            } else if (LoggedInClients.Count() >= MAX_LOGGED_IN_CLIENTS) {
+                r = new Response(ResponseStatus.LIMIT_REACHED, DataType.TEXT, "REACHED LOGGED IN USERS LIMIT");
+            } else {
                 string message = request.Data;
                 string username = message.Split(' ')[0];
                 Account account = db.Accounts.SingleOrDefault(u => u.Username == username);
-                if (account != null) {
-                    string password = message.Split(' ')[1];
-                    if (account.Password == password) {
-                        client.Account = account;
-                        return new Response(ResponseStatus.OK, DataType.TEXT, $"LOGIN ACCEPTED FOR {username}");
-                    } else {
-                        return new Response(ResponseStatus.UNAUTHORIZED, DataType.TEXT, $"WRONG PASSWORD {password}");
-                    }
+
+                if (account == null) {
+                    return new Response(ResponseStatus.NOT_FOUND, DataType.TEXT, $"USER \"{username}\" DOES NOT EXIST");
                 } else {
-                    return new Response(ResponseStatus.NOT_FOUND, DataType.TEXT, $"{username} DOES NOT EXIST");
+                    string password = message.Split(' ')[1];
+
+                    if (password != account.Password) {
+                        return new Response(ResponseStatus.UNAUTHORIZED, DataType.TEXT, $"WRONG PASSWORD FOR USER \"{username}\"");
+                    } else {
+                        client.Account = account;
+                        return new Response(ResponseStatus.OK);
+                    }
                 }
-            } else {
-                return null;
             }
+
+            return r;
         }
         static Response GetPlayerInfo(Client client, Request request) {
             if (request.Status == RequestStatus.GET_PLAYER) {
