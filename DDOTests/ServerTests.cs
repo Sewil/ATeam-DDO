@@ -1,17 +1,18 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace DDOTests {
+namespace DDOTests
+{
     [TestClass]
-    class ServerTests {
+    class ServerTests
+    {
         static DDOServer.Program server = new DDOServer.Program();
-
         [TestMethod]
-        public void ClientsOverflow() {
-            
+        public void ClientsOverflow()
+        {            
         }
-
         [TestCleanup]
-        public void CleanUp() {
+        public void CleanUp()
+        {
         }
     }
 }
