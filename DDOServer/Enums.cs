@@ -2,7 +2,6 @@
 {
     enum CellType
     {
-        Forest,
-        Ground,
+        Forest,Ground,
     }
 }

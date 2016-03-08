@@ -222,7 +222,9 @@ namespace DDOServer
                 foreach (var cell in Cells)
                 {
                     if (cell.IsSpawnable && SpawnedHealthPotions < MAXSPAWNEDHEALTHPOTIONS)
+                    {
                         availableCells.Add(cell);
+                    }
                 }
                 var randomCell = availableCells[random.Next(0, availableCells.Count)];
                 randomCell.HealthPotion = new HealthPotion();
@@ -240,7 +242,9 @@ namespace DDOServer
                 foreach (var cell in Cells)
                 {
                     if (cell.IsSpawnable && SpawnedMonsters < MAXSPAWNEDMONSTERS)
+                    {
                         emptyCells.Add(cell);
+                    }
                 }
                 var rndCell = emptyCells[rnd.Next(0, emptyCells.Count)];
                 rndCell.Monster = new Monster();

@@ -39,6 +39,10 @@ namespace DDOServer
                     if (ch.Health < 20)
                     {
                         ch.Health += c.HealthPotion.Health;
+                        if(ch.Health>20)
+                        {
+                            ch.Health = 20;
+                        }
                         c.HealthPotion = null;
                     }
                 }

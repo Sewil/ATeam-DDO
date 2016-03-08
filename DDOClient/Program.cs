@@ -16,7 +16,6 @@ namespace DDOClient
         static IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8000);
         static int? turn = null;
         static Protocol protocol = null;
-
         static void Main(string[] args)
         {
             Thread.Sleep(1000);
@@ -37,12 +36,10 @@ namespace DDOClient
                     Console.WriteLine("Connection failed. Trying again...");
                 }
             }
-
             if (connected)
             {
                 Console.Clear();
                 Login();
-
                 Player player = SelectPlayer();
                 if (player != null)
                 {
@@ -80,7 +77,6 @@ namespace DDOClient
             {
                 Console.WriteLine("Couldn't connect to server after 10 tries. :(");
             }
-
             Console.ReadLine();
         }
         static void GetServerList()
@@ -88,7 +84,6 @@ namespace DDOClient
             var masterServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             masterServer.Connect(serverEndPoint);
             protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 100, masterServer);
-
             protocol.Send(new Request(RequestStatus.NONE, DataType.TEXT, "list"));
             var r = protocol.Receive() as Response;
             var response = r.Data.TrimStart(' ').Split(' ');
@@ -96,9 +91,13 @@ namespace DDOClient
             foreach (var server in response)
             {
                 if (server.Length > 1)
+                {
                     Console.WriteLine();
+                }
                 else
+                {
                     Console.WriteLine($"ServerID: {server}");
+                }
             }
             Console.Write("Enter server id> ");
             int input = int.Parse(Console.ReadLine());
@@ -117,10 +116,8 @@ namespace DDOClient
                 string username = Console.ReadLine();
                 Console.Write("Password: ");
                 string password = Console.ReadLine();
-
                 protocol.Send(new Request(RequestStatus.LOGIN, DataType.TEXT, $"{username} {password}"));
                 response = (Response)protocol.Receive();
-
                 Console.WriteLine(response.Status);
                 Console.ReadKey();
                 Console.Clear();
@@ -149,7 +146,6 @@ namespace DDOClient
             {
                 Console.WriteLine("Couldn't retrieve players from server. Probably because this account doesn't have any players.");
             }
-
             return null;
         }
         static bool WaitingForPlayers()
@@ -165,15 +161,12 @@ namespace DDOClient
                 case ConsoleKey.UpArrow:
                     protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "↑"));
                     break;
-
                 case ConsoleKey.RightArrow:
                     protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "→"));
                     break;
-
                 case ConsoleKey.DownArrow:
                     protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "↓"));
                     break;
-
                 case ConsoleKey.LeftArrow:
                     protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "←"));
                     break;
@@ -193,9 +186,7 @@ namespace DDOClient
                     count++;
                 }
             }
-
             Console.Clear();
-
             Console.ForegroundColor = ConsoleColor.White;
             for (int y = 0; y < HEIGHT; y++)
             {
@@ -209,10 +200,13 @@ namespace DDOClient
                     else if (mapCharArray[y, x] == '@')
                     {
                         if (turn % 2 == 1)
+                        {
                             Console.ForegroundColor = ConsoleColor.Green;
+                        }
                         else if (turn % 2 == 0)
+                        {
                             Console.ForegroundColor = ConsoleColor.Red;
-
+                        }
                         Console.Write("@");
                     }
                     else if (mapCharArray[y, x] == 'P')
@@ -238,7 +232,6 @@ namespace DDOClient
                 }
                 Console.WriteLine();
             }
-
             Console.BackgroundColor = ConsoleColor.Black;
             Console.ForegroundColor = ConsoleColor.White;
         }
