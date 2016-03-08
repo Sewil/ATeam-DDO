@@ -14,7 +14,7 @@
         OK,
         LIMIT_REACHED,
         UNAUTHORIZED,
-        MOVE_BLOCKED,
+        OUT_OF_BOUNDS,
         NOT_FOUND,
         NOT_READY,
         BAD_REQUEST
@@ -24,12 +24,11 @@
         NONE,
         GET_ACCOUNT_PLAYERS,
         SELECT_PLAYER,
-        GET_MAP,
+        GET_STATE,
         GET_PLAYER,
         START,
         LOGIN,
-        GETSTATE,
         MOVE,
-        SENDSTATE,
+        SEND_CHAT_MESSAGE
     }
 }

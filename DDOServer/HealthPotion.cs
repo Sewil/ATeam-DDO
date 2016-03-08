@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DDOServer
 {
-    class HealthPotion
+    public class HealthPotion
     {
         public const int HEALTH = 10;
         public ConsoleColor Color { get; set; }

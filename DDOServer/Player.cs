@@ -2,17 +2,12 @@
 
 namespace DDOServer
 {
-    class Player : Character
+    public class Player : Character
     {
-        public const int HEALTH = 20;
         public const int DAMAGE = 5;
-        public bool IsActive { get; set; }
-        public Player(string name)
+        public Player(string name, int health, int damage, int gold) : base(name, health, damage, gold)
         {
-            Name = name;
             Color = ConsoleColor.Red;
-            Health = HEALTH;
-            Damage = DAMAGE;
         }
     }
 }
