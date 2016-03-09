@@ -175,21 +175,24 @@ namespace DDOServer {
                 if (request.Status != RequestStatus.LOGIN) {
                     Send(client, new Response(ResponseStatus.BAD_REQUEST));
                 } else if (client.IsLoggedIn) {
-                    Send(client, new Response(ResponseStatus.BAD_REQUEST, DataType.TEXT, "CLIENT ALREADY LOGGED IN"));
+                    Send(client, new Response(ResponseStatus.BAD_REQUEST, DataType.TEXT, "You are already logged in."));
                 } else if (LoggedInClients.Count() >= MAX_LOGGED_IN_CLIENTS) {
-                    Send(client, new Response(ResponseStatus.LIMIT_REACHED, DataType.TEXT, "REACHED LOGGED IN USERS LIMIT"));
+                    Send(client, new Response(ResponseStatus.LIMIT_REACHED, DataType.TEXT, $"Only {MAX_LOGGED_IN_CLIENTS} users can be logged in at a time."));
                 } else {
                     string message = request.Data;
                     string username = message.Split(' ')[0];
                     Account account = db.Accounts.SingleOrDefault(u => u.Username == username);
 
+
                     if (account == null) {
-                        Send(client, new Response(ResponseStatus.NOT_FOUND, DataType.TEXT, $"USER \"{username}\" DOES NOT EXIST"));
+                        Send(client, new Response(ResponseStatus.NOT_FOUND, DataType.TEXT, "This user does not exist."));
+                    } else if (LoggedInClients.Any(c => c.Account == account)) {
+                        Send(client, new Response(ResponseStatus.UNAUTHORIZED, DataType.TEXT, "This user is already logged in."));
                     } else {
                         string password = message.Split(' ')[1];
 
                         if (password != account.Password) {
-                            Send(client, new Response(ResponseStatus.UNAUTHORIZED, DataType.TEXT, $"WRONG PASSWORD FOR USER \"{username}\""));
+                            Send(client, new Response(ResponseStatus.UNAUTHORIZED, DataType.TEXT, "Incorrect password."));
                         } else {
                             client.Account = account;
                             Send(client, new Response(ResponseStatus.OK));
