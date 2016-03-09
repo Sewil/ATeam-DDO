@@ -2,7 +2,7 @@
 
 namespace DDOServer
 {
-    public class Player : Character
+    internal class Player : Character
     {
         public const int DAMAGE = 5;
         public int Id { get; set; }

@@ -2,7 +2,7 @@
 
 namespace DDOServer
 {
-    public class Cell
+    internal class Cell
     {
         public CellType CellType { get; }
         public HealthPotion HealthPotion { get; set; }

@@ -53,18 +53,18 @@ namespace DDOClient
                 {
                     Console.WriteLine("Waiting for players...");
                     serverRequest += GameStarter;
-                    while (!gameStarted)
-                    {
-                        Thread.Sleep(5000);
-                    }
+                    while (!gameStarted) { }
                     Console.Clear();
                     serverRequest += ChatLogger;
-
-                    new Thread(new ParameterizedThreadStart(StateWriter)).Start();
+                    serverRequest += StateWriter;
                     while (true)
                     {
                         var key = Console.ReadKey().Key;
                         TryPlayerMove(key);
+                        State state = GetState();
+                        if (state != null) {
+                            WriteState(state);
+                        }
                     }
                 }
                 else
@@ -107,10 +107,10 @@ namespace DDOClient
                 }
             }
         }
-        static void StateWriter(object arg) {
-            while (true) {
-                WriteState(GetState());
-                Thread.Sleep(2000);
+        static void StateWriter(Request request) {
+            if(request.Status == RequestStatus.WRITE_STATE) {
+                State state = JsonConvert.DeserializeObject<State>(request.Data);
+                WriteState(state);
             }
         }
         static void GetServerList()
@@ -157,20 +157,15 @@ namespace DDOClient
         }
         static Response ServerReceive() {
             Response res = serverResponse = null;
-            lock (locker) {
-                while (res == null) {
-                    res = serverResponse;
-                }
+            while (res == null) {
+                res = serverResponse;
             }
-
             return res;
         }
         static Response ServerRequest(Request req) {
             Response r = null;
-            lock (locker) {
-                protocol.Send(req);
-                r = ServerReceive();
-            }
+            protocol.Send(req);
+            r = ServerReceive();
 
             return r;
         }
@@ -221,84 +216,64 @@ namespace DDOClient
                     protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "←"));
                     break;
             }
+            ServerReceive();
         }
         static void WriteState(State state)
         {
-            string mapStr = state.MapStr;
-            int WIDTH = 75;
-            int HEIGHT = 20;
-            int count = 0;
-            char[,] mapCharArray = new char[HEIGHT, WIDTH];
-            for (int y = 0; y < HEIGHT; y++) {
-                for (int x = 0; x < WIDTH; x++) {
-                    mapCharArray[y, x] = mapStr[count];
-                    count++;
-                }
-            }
-
-            Console.Clear();
-            Console.ForegroundColor = ConsoleColor.White;
-            for (int y = 0; y < HEIGHT; y++) {
-                for (int x = 0; x < WIDTH; x++) {
-                    if (mapCharArray[y, x] == '$') {
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.Write("$");
-                    } else if (mapCharArray[y, x] == '@') {
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.Write("@");
-                    }
-                    else if (mapCharArray[y, x] == 'F')
-                    {
-                        Console.ForegroundColor = ConsoleColor.Blue;
-                        Console.Write("F");
-                    }
-                    else if (mapCharArray[y, x] == 'G')
-                    {
-                        Console.ForegroundColor = ConsoleColor. Black;
-                        Console.Write("G");
-                    }
-                    else if (mapCharArray[y, x] == 'L')
-                    {
-                        Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.Write("L");
-                    }
-                    else if (mapCharArray[y, x] == 'I')
-                    {
-                        Console.ForegroundColor = ConsoleColor.Yellow;
-                        Console.Write("I");
-                        
-                    }
-                    else if (mapCharArray[y, x] == 'P') {
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.Write("P");
-                    } else if (mapCharArray[y, x] == 'M') {
-                        Console.ForegroundColor = ConsoleColor.Magenta;
-                        Console.Write("M");
-                    } else if (mapCharArray[y, x] == '#') {
-                        Console.ForegroundColor = ConsoleColor.DarkGreen;
-                        Console.Write("#");
-                    } else if (mapCharArray[y, x] == '.') {
-                        Console.ForegroundColor = ConsoleColor.White;
-                        Console.Write(".");
+            lock (locker) {
+                string mapStr = state.MapStr;
+                int WIDTH = 75;
+                int HEIGHT = 20;
+                int count = 0;
+                char[,] mapCharArray = new char[HEIGHT, WIDTH];
+                for (int y = 0; y < HEIGHT; y++) {
+                    for (int x = 0; x < WIDTH; x++) {
+                        mapCharArray[y, x] = mapStr[count];
+                        count++;
                     }
                 }
 
-                Console.WriteLine();
-            }
+                Console.Clear();
+                Console.ForegroundColor = ConsoleColor.White;
+                for (int y = 0; y < HEIGHT; y++) {
+                    for (int x = 0; x < WIDTH; x++) {
+                        if (mapCharArray[y, x] == '$') {
+                            Console.ForegroundColor = ConsoleColor.Yellow;
+                            Console.Write("$");
+                        } else if (mapCharArray[y, x] == '@') {
+                            Console.ForegroundColor = ConsoleColor.Green;
+                            Console.Write("@");
+                        } else if (mapCharArray[y, x] == 'P') {
+                            Console.ForegroundColor = ConsoleColor.Red;
+                            Console.Write("P");
+                        } else if (mapCharArray[y, x] == 'M') {
+                            Console.ForegroundColor = ConsoleColor.Magenta;
+                            Console.Write("M");
+                        } else if (mapCharArray[y, x] == '#') {
+                            Console.ForegroundColor = ConsoleColor.DarkGreen;
+                            Console.Write("#");
+                        } else if (mapCharArray[y, x] == '.') {
+                            Console.ForegroundColor = ConsoleColor.White;
+                            Console.Write(".");
+                        }
+                    }
 
-            foreach (var message in chatLog) {
-                Console.WriteLine($"({message.Sent.ToString("HH:mm:ss")}) {message.PlayerName}: {message.Content}");
-            }
+                    Console.WriteLine();
+                }
 
-            Console.BackgroundColor = ConsoleColor.Black;
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine($"Health: {state.Player.Health}, Gold: {state.Player.Gold}, Damage: {state.Player.Damage}");
+                foreach (var message in chatLog) {
+                    Console.WriteLine($"({message.Sent.ToString("HH:mm:ss")}) {message.PlayerName}: {message.Content}");
+                }
+
+                Console.BackgroundColor = ConsoleColor.Black;
+                Console.ForegroundColor = ConsoleColor.White;
+                Console.WriteLine($"Health: {state.Player.Health}, Gold: {state.Player.Gold}, Damage: {state.Player.Damage}");
+            }
         }
         static State GetState()
         {
             var r = ServerRequest(new Request(RequestStatus.GET_STATE));
-
-            if (r.DataType != DataType.JSON && r.Status == ResponseStatus.OK) {
+            if (r.DataType == DataType.JSON && r.Status == ResponseStatus.OK) {
                 var state = JsonConvert.DeserializeObject<State>(r.Data);
                 return state;
             } else {
