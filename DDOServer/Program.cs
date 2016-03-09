@@ -22,7 +22,6 @@ namespace DDOServer {
     }
     public class Client {
         public bool IsHeard { get; set; }
-        public Socket Socket { get; }
         public Protocol Protocol { get; }
         public bool IsLoggedIn { get { return Account != null; } }
         public bool HasSelectedPlayer { get { return SelectedPlayer != null; } }
@@ -30,8 +29,8 @@ namespace DDOServer {
         public DDODatabase.Player SelectedPlayer { get; set; }
         public string IPAddress {
             get {
-                if (Socket != null) {
-                    return Socket.RemoteEndPoint.ToString();
+                if (Protocol != null && Protocol.Socket != null) {
+                    return Protocol.Socket.RemoteEndPoint.ToString();
                 } else {
                     return null;
                 }
@@ -39,7 +38,6 @@ namespace DDOServer {
         }
         public Client(Protocol protocol) {
             Protocol = protocol;
-            Socket = protocol.Socket;
         }
     }
     public class Program {
@@ -122,9 +120,7 @@ namespace DDOServer {
                                 });
                             }
                         }
-                    }
 
-                    lock (PlayerClients) {
                         if (!countingDown && !gameStarted && PlayerClients.Count() >= MINIMUM_PLAYERS) {
                             countingDown = true;
                             Console.WriteLine("Starting game in 10 seconds...");
@@ -178,8 +174,7 @@ namespace DDOServer {
             lock (locker) {
                 if (!gameStarted) {
                     foreach (var client in LoggedInClients) {
-                        var protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 100, client.Socket);
-                        protocol.Send(new Request(RequestStatus.START));
+                        Send(client, new Request(RequestStatus.START));
                     }
                     
                     var players = new List<Player>();
