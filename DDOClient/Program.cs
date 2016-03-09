@@ -59,13 +59,12 @@ namespace DDOClient
                     serverRequest += StateWriter;
                     while (true)
                     {
-                        State state = GetState();
-                        if(state != null) {
-                            WriteState(state);
-                        }
-
                         var key = Console.ReadKey().Key;
                         TryPlayerMove(key);
+                        State state = GetState();
+                        if (state != null) {
+                            WriteState(state);
+                        }
                     }
                 }
                 else

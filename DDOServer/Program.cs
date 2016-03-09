@@ -52,12 +52,24 @@ namespace DDOServer {
         static IPEndPoint serverEndPoint = new IPEndPoint(ipAddress, 8001);
         static IPEndPoint masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
 
-        const int MAX_LOGGED_IN_CLIENTS = 2;
+        const int MAX_LOGGED_IN_CLIENTS = 5;
         const int MINIMUM_PLAYERS = 2;
         const int MAX_CONNECTED_CLIENTS = 10;
         static List<Client> clients = new List<Client>();
-        static IEnumerable<Client> LoggedInClients { get { return clients.Where(c => c.IsLoggedIn); } }
-        static IEnumerable<Client> PlayerClients { get { return clients.Where(c => c.HasSelectedPlayer); } }
+        static IEnumerable<Client> LoggedInClients {
+            get {
+                lock (clients) {
+                    return clients.Where(c => c.IsLoggedIn);
+                }
+            }
+        }
+        static IEnumerable<Client> PlayerClients {
+            get {
+                lock (clients) {
+                    return clients.Where(c => c.HasSelectedPlayer);
+                }
+            }
+        }
 
         static bool gameStarted = false;
         static Map map = null;
@@ -87,27 +99,38 @@ namespace DDOServer {
                 if (clients.Count < MAX_CONNECTED_CLIENTS) {
                     var socket = server.Accept();
                     var client = new Client(new Protocol("DDO/1.0", new UTF8Encoding(), 5000, socket));
-                    clients.Add(client);
+                    lock (clients) {
+                        clients.Add(client);
+                    }
                     Console.WriteLine($"{DateTime.Now}\tClient accepted ({client.IPAddress})");
                 }
             }
         }
         static void ListenToClientRequests(object arg) {
             Console.WriteLine($"{DateTime.Now}\tListening to client requests...");
+            bool countingDown = false;
             while (true) {
                 if (clients.Count > 0) {
-                    var clientsTemp = clients.ToArray();
+                    lock (clients) {
+                        foreach (var client in clients) {
+                            if (client != null && !client.IsHeard) {
+                                client.IsHeard = true;
+                                new TaskFactory().StartNew(() => {
+                                    var transfer = Receive(client);
+                                    HandleClientRequest(client, (Request)transfer);
+                                    client.IsHeard = false;
+                                });
+                            }
+                        }
+                    }
 
-                    foreach (var client in clientsTemp) {
-                        if (client != null && !client.IsHeard) {
-                            client.IsHeard = true;
+                    lock (PlayerClients) {
+                        if (!countingDown && !gameStarted && PlayerClients.Count() >= MINIMUM_PLAYERS) {
+                            countingDown = true;
+                            Console.WriteLine("Starting game in 10 seconds...");
                             new TaskFactory().StartNew(() => {
-                                var transfer = Receive(client);
-                                HandleClientRequest(client, (Request)transfer);
-                                if (!gameStarted && PlayerClients.Count() >= MINIMUM_PLAYERS) {
-                                    StartGame();
-                                }
-                                client.IsHeard = false;
+                                Thread.Sleep(10000);
+                                StartGame();
                             });
                         }
                     }
@@ -158,16 +181,27 @@ namespace DDOServer {
                         var protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 100, client.Socket);
                         protocol.Send(new Request(RequestStatus.START));
                     }
-                    var clientsTemp = clients;
+                    
                     var players = new List<Player>();
-                    foreach (var client in clientsTemp) {
-                        var sp = client.SelectedPlayer;
-                        var player = new Player(sp.Name, sp.Health, sp.Damage, sp.Gold);
-                        players.Add(player);
+                    lock (clients) {
+                        foreach (var client in LoggedInClients) {
+                            var sp = client.SelectedPlayer;
+                            var player = new Player(sp.Name, sp.Health, sp.Damage, sp.Gold);
+                            players.Add(player);
+                        }
                     }
                     map = Map.Load(players.ToArray());
                     gameStarted = true;
+
+                    SendStates();
                 }
+            }
+        }
+        static void SendStates(Client excludedClient = null) {
+            State state = new State { MapStr = map.MapToString()};
+            foreach (var c in PlayerClients.Where(c => c != excludedClient)) {
+                state.Player = c.SelectedPlayer;
+                Send(c, new Request(RequestStatus.WRITE_STATE, DataType.JSON, JsonConvert.SerializeObject(state)));
             }
         }
         static void Login(Client client, Request request) {
@@ -229,10 +263,7 @@ namespace DDOServer {
                 if (request.Status == RequestStatus.GET_STATE && gameStarted) {
                     State state = new State { MapStr = map.MapToString(), Player = client.SelectedPlayer };
                     Send(client, new Response(ResponseStatus.OK, DataType.JSON, JsonConvert.SerializeObject(state)));
-                    foreach (var c in PlayerClients.Where(c => c != client)) {
-                        state.Player = c.SelectedPlayer;
-                        Send(c, new Request(RequestStatus.WRITE_STATE, DataType.JSON, JsonConvert.SerializeObject(state)));
-                    }
+                    SendStates(client);
                 } else {
                     Send(client, new Response(ResponseStatus.NOT_READY, DataType.TEXT, "GAME NOT STARTED"));
                 }
