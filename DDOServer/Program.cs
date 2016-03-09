@@ -160,6 +160,7 @@ namespace DDOServer {
             }
         }
         static void StartGame() {
+            int count = 0;
             lock (locker) {
                 if (!gameStarted) {
                     foreach (var client in LoggedInClients) {
@@ -170,12 +171,23 @@ namespace DDOServer {
                     var players = new List<Player>();
                     foreach (var client in clientsTemp) {
                         var sp = client.SelectedPlayer;
-                        var player = new Player(sp.Name, sp.Health, sp.Damage, sp.Gold);
+                        var player = new Player(sp.Name, sp.Health, sp.Damage, sp.Gold++);
                         players.Add(player);
                     }
+                    SetPlayersIds(players);
                     map = Map.Load(players.ToArray());
                     gameStarted = true;
                 }
+            }
+        }
+
+        static void SetPlayersIds(List<Player> players)
+        {
+            int count = 1;
+            foreach (var player in players)
+            {
+                if(count < 6)
+                player.Id = count++;
             }
         }
         static Response Login(Client client, Request request) {

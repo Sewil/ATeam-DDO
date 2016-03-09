@@ -146,7 +146,16 @@ namespace DDOServer
                     }
                     else if (cell.HasPlayer(players))
                     {
-                        mapStr += "@";
+                        if (cell.GetPlayer(players).Id == 1)
+                            mapStr += "@";
+                        else if (cell.GetPlayer(players).Id == 2)
+                            mapStr += "F";
+                        else if (cell.GetPlayer(players).Id == 3)
+                            mapStr += "G";
+                        else if (cell.GetPlayer(players).Id == 4)
+                            mapStr += "L";
+                        else if (cell.GetPlayer(players).Id == 5)
+                            mapStr += "I";
                     }
                     else if (cell.HasHealthPotion)
                     {
