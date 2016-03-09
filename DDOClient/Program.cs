@@ -5,7 +5,6 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using DDOProtocol;
-using DDODatabase;
 using DDOServer;
 using Newtonsoft.Json;
 
@@ -92,7 +91,7 @@ namespace DDOClient
             Console.Clear();
             Console.WriteLine("CHAT\n---------------------------");
             foreach (var message in chatLog) {
-                Console.WriteLine($"({message.Sent.ToString("HH:mm:ss")}) {message.PlayerName}: {message.Content}");
+                Console.WriteLine($"({message.Sent.ToString("HH:mm:ss")}) {message.Name}: {message.Content}");
             }
         }
         static void OpenChat() {
@@ -233,12 +232,12 @@ namespace DDOClient
             } else if(r.Status != ResponseStatus.OK) {
                 Console.WriteLine("Couldn't retrieve players from server. Probably because this account doesn't have any players.");
             } else {
-                var players = JsonConvert.DeserializeObject<Player[]>(r.Data);
+                var players = JsonConvert.DeserializeObject<DDODatabase.Player[]>(r.Data);
                 for (int i = 0; i < players.Length; i++) {
                     Console.WriteLine($"{i} - {players[i].Name}");
                 }
                 Console.WriteLine("Type in the number of your player: ");
-                Player player = players[int.Parse(Console.ReadLine())];
+                DDODatabase.Player player = players[int.Parse(Console.ReadLine())];
 
                 r = ServerRequest(new Request(RequestStatus.SELECT_PLAYER, DataType.JSON, JsonConvert.SerializeObject(player)));
 
@@ -295,29 +294,6 @@ namespace DDOClient
                         if (mapCharArray[y, x] == '$') {
                             Console.ForegroundColor = ConsoleColor.Yellow;
                             Console.Write("$");
-                        } else if (mapCharArray[y, x] == '@') {
-                            Console.ForegroundColor = ConsoleColor.Green;
-                            Console.Write("@");
-                        }
-                        else if (mapCharArray[y, x] == 'F')
-                        {
-                            Console.ForegroundColor = ConsoleColor.Blue;
-                            Console.Write("F");
-                        }
-                        else if (mapCharArray[y, x] == 'G')
-                        {
-                            Console.ForegroundColor = ConsoleColor.Cyan;
-                            Console.Write("G");
-                        }
-                        else if (mapCharArray[y, x] == 'L')
-                        {
-                            Console.ForegroundColor = ConsoleColor.DarkRed;
-                            Console.Write("L");
-                        }
-                        else if (mapCharArray[y, x] == 'I')
-                        {
-                            Console.ForegroundColor = ConsoleColor.DarkGray;
-                            Console.Write("I");
                         }
                         else if (mapCharArray[y, x] == 'P') {
                             Console.ForegroundColor = ConsoleColor.Red;
@@ -331,6 +307,15 @@ namespace DDOClient
                         } else if (mapCharArray[y, x] == '.') {
                             Console.ForegroundColor = ConsoleColor.White;
                             Console.Write(".");
+                        } else {
+                            lock (state) {
+                                foreach (var player in state.Players) {
+                                    if(mapCharArray[y, x] == player.Icon.Key) {
+                                        Console.ForegroundColor = player.Icon.Value;
+                                        Console.Write(player.Icon.Key);
+                                    }
+                                }
+                            }
                         }
                     }
 

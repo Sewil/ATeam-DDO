@@ -12,18 +12,24 @@ using Newtonsoft.Json;
 
 namespace DDOServer {
     public class State {
-        public string MapStr { get; set; }
+        public string MapStr { get; }
+        public Player[] Players { get; }
         public DDODatabase.Player Player { get; set; }
+        public State(string mapStr, Player[] players, DDODatabase.Player player) {
+            MapStr = mapStr;
+            Players = players;
+            Player = player;
+        }
     }
     public class ChatMessage {
         public DateTime Sent { get; }
         public string Content { get; }
-        public string PlayerName { get; }
+        public string Name { get; }
 
-        public ChatMessage(DateTime sent, string content, string playerName) {
+        public ChatMessage(DateTime sent, string content, string name) {
             Sent = sent;
             Content = content;
-            PlayerName = playerName;
+            Name = name;
         }
     }
     public class Client {
@@ -198,9 +204,12 @@ namespace DDOServer {
                     
                     var players = new List<Player>();
                     lock (clients) {
-                        foreach (var client in LoggedInClients) {
+                        var loggedInClients = LoggedInClients.ToArray();
+                        for (int i = 0; i < loggedInClients.Length; i++) {
+                            var client = loggedInClients[i];
+
                             var sp = client.SelectedPlayer;
-                            var player = new Player(sp.Name, sp.Health, sp.Damage, sp.Gold);
+                            var player = new Player(sp.Name, sp.Health, sp.Damage, sp.Gold, Player.icons.ElementAt(i));
                             players.Add(player);
                         }
                     }
@@ -223,7 +232,7 @@ namespace DDOServer {
             }
         }
         static void SendStates(Client excludedClient = null) {
-            State state = new State { MapStr = map.MapToString()};
+            State state = new State(map.MapToString(), map.players, null);
             foreach (var c in PlayerClients.Where(c => c != excludedClient)) {
                 state.Player = c.SelectedPlayer;
                 Send(c, new Request(RequestStatus.WRITE_STATE, DataType.JSON, JsonConvert.SerializeObject(state)));
@@ -286,7 +295,7 @@ namespace DDOServer {
         static void GetState(Client client, Request request) {
             lock (locker) {
                 if (request.Status == RequestStatus.GET_STATE && gameStarted) {
-                    State state = new State { MapStr = map.MapToString(), Player = client.SelectedPlayer };
+                    State state = new State(map.MapToString(), map.players, client.SelectedPlayer);
                     Send(client, new Response(ResponseStatus.OK, DataType.JSON, JsonConvert.SerializeObject(state)));
                     SendStates(client);
                 } else {

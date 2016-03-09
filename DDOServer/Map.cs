@@ -36,6 +36,7 @@ namespace DDOServer
             }
         }
         public Player[] players;
+
         public List<Monster> monsters = new List<Monster>();
         public const int WIDTH = 75;
         public const int HEIGHT = 20;
@@ -146,16 +147,8 @@ namespace DDOServer
                     }
                     else if (cell.HasPlayer(players))
                     {
-                        if (cell.GetPlayer(players).Id == 1)
-                            mapStr += "@";
-                        else if (cell.GetPlayer(players).Id == 2)
-                            mapStr += "F";
-                        else if (cell.GetPlayer(players).Id == 3)
-                            mapStr += "G";
-                        else if (cell.GetPlayer(players).Id == 4)
-                            mapStr += "L";
-                        else if (cell.GetPlayer(players).Id == 5)
-                            mapStr += "I";
+                        var player = cell.GetPlayer(players);
+                        mapStr += player.Icon.Key;
                     }
                     else if (cell.HasHealthPotion)
                     {

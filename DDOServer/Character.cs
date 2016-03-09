@@ -2,7 +2,7 @@
 
 namespace DDOServer
 {
-    internal abstract class Character
+    public abstract class Character
     {
         public int X { get; set; }
         public int Y { get; set; }
