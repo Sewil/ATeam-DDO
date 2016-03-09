@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace DDOServer
 {
-    public class Map
+    internal class Map
     {
         long spawnTimeMonster;
         long spawnTimeHealthPotion;

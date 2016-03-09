@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DDOServer
 {
-    public class Monster : Character
+    internal class Monster : Character
     {
         public Monster(string name, int health, int damage, int gold) : base(name, health, damage, gold)
         {

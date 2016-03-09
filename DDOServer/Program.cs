@@ -22,7 +22,8 @@ namespace DDOServer {
     }
     public class Client {
         public bool IsHeard { get; set; }
-        public Socket Socket { get; set; }
+        public Socket Socket { get; }
+        public Protocol Protocol { get; }
         public bool IsLoggedIn { get { return Account != null; } }
         public bool HasSelectedPlayer { get { return SelectedPlayer != null; } }
         public Account Account { get; set; }
@@ -36,6 +37,10 @@ namespace DDOServer {
                 }
             }
         }
+        public Client(Protocol protocol) {
+            Protocol = protocol;
+            Socket = protocol.Socket;
+        }
     }
     public class Program {
         static readonly object locker = new object();
@@ -48,6 +53,7 @@ namespace DDOServer {
         static IPEndPoint masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
 
         const int MAX_LOGGED_IN_CLIENTS = 2;
+        const int MINIMUM_PLAYERS = 2;
         const int MAX_CONNECTED_CLIENTS = 10;
         static List<Client> clients = new List<Client>();
         static IEnumerable<Client> LoggedInClients { get { return clients.Where(c => c.IsLoggedIn); } }
@@ -75,43 +81,15 @@ namespace DDOServer {
                 }
             }
         }
-        static Response HandleClientRequest(Client client, Request request) {
-            switch (request.Status) {
-                case RequestStatus.MOVE: return MovePlayer(client, request);
-                case RequestStatus.LOGIN: return Login(client, request);
-                case RequestStatus.GET_STATE: return GetState(client, request);
-                case RequestStatus.GET_PLAYER: return GetPlayerInfo(client, request);
-                case RequestStatus.GET_ACCOUNT_PLAYERS: return GetAccountPlayers(client, request);
-                case RequestStatus.SELECT_PLAYER: return SelectPlayer(client, request);
-                default: return null;
-            }
-        }
-
-        static Response SelectPlayer(Client client, Request request) {
-            if (request.Status == RequestStatus.SELECT_PLAYER && request.DataType == DataType.JSON) {
-                if (client.IsLoggedIn) {
-                    client.SelectedPlayer = JsonConvert.DeserializeObject<DDODatabase.Player>(request.Data);
-                    return new Response(ResponseStatus.OK);
-                } else {
-                    return new Response(ResponseStatus.UNAUTHORIZED);
+        static void AcceptClients(object arg) {
+            Console.WriteLine($"{DateTime.Now}\tAccepting clients...");
+            while (true) {
+                if (clients.Count < MAX_CONNECTED_CLIENTS) {
+                    var socket = server.Accept();
+                    var client = new Client(new Protocol("DDO/1.0", new UTF8Encoding(), 5000, socket));
+                    clients.Add(client);
+                    Console.WriteLine($"{DateTime.Now}\tClient accepted ({client.IPAddress})");
                 }
-            } else {
-                return new Response(ResponseStatus.BAD_REQUEST);
-            }
-        }
-
-        static Response GetAccountPlayers(Client client, Request request) {
-            if (request.Status == RequestStatus.GET_ACCOUNT_PLAYERS && client.IsLoggedIn) {
-                if (db.Players.Any(p => p.AccountId == client.Account.Id)) {
-                    var players = db.Players.Where(p => p.AccountId == client.Account.Id).Select(p => new {
-                        AccountId = p.AccountId, Damage = p.Damage, Gold = p.Gold, Health = p.Health, Id = p.Id, Name = p.Name
-                    }).ToArray();
-                    return new Response(ResponseStatus.OK, DataType.JSON, JsonConvert.SerializeObject(players));
-                } else {
-                    return new Response(ResponseStatus.NOT_FOUND);
-                }
-            } else {
-                return null;
             }
         }
         static void ListenToClientRequests(object arg) {
@@ -124,20 +102,10 @@ namespace DDOServer {
                         if (client != null && !client.IsHeard) {
                             client.IsHeard = true;
                             new TaskFactory().StartNew(() => {
-                                var protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 500, client.Socket);
-                                var transfer = protocol.Receive();
-                                Console.Write($"{DateTime.Now}\t[{serverEndPoint} <-- {client.IPAddress}]\t");
-                                Console.WriteLine(protocol.GetMessage(transfer));
-                                var response = HandleClientRequest(client, (Request)transfer);
-                                if (response != null) {
-                                    Console.Write($"{DateTime.Now}\t[{serverEndPoint} --> {client.IPAddress}]\t");
-                                    Console.WriteLine(protocol.GetMessage(response));
-                                    protocol.Send(response);
-
-                                    if(!gameStarted && PlayerClients.Count() >= 2) {
-                                        Console.WriteLine("starting game...");
-                                        StartGame();
-                                    }
+                                var transfer = Receive(client);
+                                HandleClientRequest(client, (Request)transfer);
+                                if (!gameStarted && PlayerClients.Count() >= MINIMUM_PLAYERS) {
+                                    StartGame();
                                 }
                                 client.IsHeard = false;
                             });
@@ -145,20 +113,44 @@ namespace DDOServer {
                     }
                 }
             }
-
-            //Console.WriteLine("Stopped listening to client requests...");
         }
-        static void AcceptClients(object arg) {
-            Console.WriteLine($"{DateTime.Now}\tAccepting clients...");
-            while (true) {
-                if (clients.Count < MAX_CONNECTED_CLIENTS) {
-                    var socket = server.Accept();
-                    var client = new Client { Socket = socket };
-                    clients.Add(client);
-                    Console.WriteLine($"{DateTime.Now}\tClient accepted ({client.IPAddress})");
+        static void HandleClientRequest(Client client, Request request) {
+            switch (request.Status) {
+                case RequestStatus.MOVE: MovePlayer(client, request); break;
+                case RequestStatus.LOGIN: Login(client, request); break;
+                case RequestStatus.GET_STATE: GetState(client, request); break;
+                case RequestStatus.GET_PLAYER: GetPlayerInfo(client, request); break;
+                case RequestStatus.GET_ACCOUNT_PLAYERS: GetAccountPlayers(client, request); break;
+                case RequestStatus.SELECT_PLAYER: SelectPlayer(client, request); break;
+            }
+        }
+
+        static void SelectPlayer(Client client, Request request) {
+            if (request.Status == RequestStatus.SELECT_PLAYER && request.DataType == DataType.JSON) {
+                if (client.IsLoggedIn) {
+                    client.SelectedPlayer = JsonConvert.DeserializeObject<DDODatabase.Player>(request.Data);
+                    Send(client, new Response(ResponseStatus.OK));
+                } else {
+                    Send(client, new Response(ResponseStatus.UNAUTHORIZED));
+                }
+            } else {
+                Send(client, new Response(ResponseStatus.BAD_REQUEST));
+            }
+        }
+
+        static void GetAccountPlayers(Client client, Request request) {
+            if (request.Status == RequestStatus.GET_ACCOUNT_PLAYERS && client.IsLoggedIn) {
+                if (db.Players.Any(p => p.AccountId == client.Account.Id)) {
+                    var players = db.Players.Where(p => p.AccountId == client.Account.Id).Select(p => new {
+                        AccountId = p.AccountId, Damage = p.Damage, Gold = p.Gold, Health = p.Health, Id = p.Id, Name = p.Name
+                    }).ToArray();
+                    Send(client, new Response(ResponseStatus.OK, DataType.JSON, JsonConvert.SerializeObject(players)));
+                } else {
+                    Send(client, new Response(ResponseStatus.NOT_FOUND));
                 }
             }
         }
+        
         static void StartGame() {
             lock (locker) {
                 if (!gameStarted) {
@@ -178,66 +170,84 @@ namespace DDOServer {
                 }
             }
         }
-        static Response Login(Client client, Request request) {
-            Response r = null;
+        static void Login(Client client, Request request) {
             lock (locker) {
                 if (request.Status != RequestStatus.LOGIN) {
-                    r = new Response(ResponseStatus.BAD_REQUEST);
+                    Send(client, new Response(ResponseStatus.BAD_REQUEST));
                 } else if (client.IsLoggedIn) {
-                    r = new Response(ResponseStatus.BAD_REQUEST, DataType.TEXT, "CLIENT ALREADY LOGGED IN");
+                    Send(client, new Response(ResponseStatus.BAD_REQUEST, DataType.TEXT, "CLIENT ALREADY LOGGED IN"));
                 } else if (LoggedInClients.Count() >= MAX_LOGGED_IN_CLIENTS) {
-                    r = new Response(ResponseStatus.LIMIT_REACHED, DataType.TEXT, "REACHED LOGGED IN USERS LIMIT");
+                    Send(client, new Response(ResponseStatus.LIMIT_REACHED, DataType.TEXT, "REACHED LOGGED IN USERS LIMIT"));
                 } else {
                     string message = request.Data;
                     string username = message.Split(' ')[0];
                     Account account = db.Accounts.SingleOrDefault(u => u.Username == username);
 
                     if (account == null) {
-                        return new Response(ResponseStatus.NOT_FOUND, DataType.TEXT, $"USER \"{username}\" DOES NOT EXIST");
+                        Send(client, new Response(ResponseStatus.NOT_FOUND, DataType.TEXT, $"USER \"{username}\" DOES NOT EXIST"));
                     } else {
                         string password = message.Split(' ')[1];
 
                         if (password != account.Password) {
-                            return new Response(ResponseStatus.UNAUTHORIZED, DataType.TEXT, $"WRONG PASSWORD FOR USER \"{username}\"");
+                            Send(client, new Response(ResponseStatus.UNAUTHORIZED, DataType.TEXT, $"WRONG PASSWORD FOR USER \"{username}\""));
                         } else {
                             client.Account = account;
-                            return new Response(ResponseStatus.OK);
+                            Send(client, new Response(ResponseStatus.OK));
                         }
                     }
                 }
             }
-
-            return r;
         }
-        static Response GetPlayerInfo(Client client, Request request) {
+        static void GetPlayerInfo(Client client, Request request) {
             if (request.Status == RequestStatus.GET_PLAYER) {
                 if (client.IsLoggedIn && client.HasSelectedPlayer) {
-                    return new Response(ResponseStatus.OK, DataType.JSON, JsonConvert.SerializeObject(client.SelectedPlayer));
+                    Send(client, new Response(ResponseStatus.OK, DataType.JSON, JsonConvert.SerializeObject(client.SelectedPlayer)));
                 } else {
-                    return new Response(ResponseStatus.UNAUTHORIZED);
+                    Send(client, new Response(ResponseStatus.UNAUTHORIZED));
                 }
             } else {
-                return null;
+                Send(client, new Response(ResponseStatus.BAD_REQUEST));
             }
         }
-        static Response MovePlayer(Client client, Request request) {
+        static void MovePlayer(Client client, Request request) {
             if (request.Status != RequestStatus.MOVE || !gameStarted) {
-                return new Response(ResponseStatus.BAD_REQUEST);
+                Send(client, new Response(ResponseStatus.BAD_REQUEST));
             } else {
                 if (client.IsLoggedIn && client.HasSelectedPlayer) {
                     map.MovePlayer(request.Data, client.SelectedPlayer.Name);
-                    return new Response(ResponseStatus.OK);
+                    Send(client, new Response(ResponseStatus.OK));
                 } else {
-                    return new Response(ResponseStatus.UNAUTHORIZED);
+                    Send(client, new Response(ResponseStatus.UNAUTHORIZED));
                 }
             }
         }
-        static Response GetState(Client client, Request request) {
-            if (request.Status == RequestStatus.GET_STATE && gameStarted) {
-                return new Response(ResponseStatus.OK, DataType.TEXT, JsonConvert.SerializeObject(new State { MapStr = map.MapToString(), Player = client.SelectedPlayer }));
-            } else {
-                return new Response(ResponseStatus.NOT_READY, DataType.TEXT, "GAME NOT STARTED");
+        static void GetState(Client client, Request request) {
+            lock (locker) {
+                if (request.Status == RequestStatus.GET_STATE && gameStarted) {
+                    State state = new State { MapStr = map.MapToString(), Player = client.SelectedPlayer };
+                    Send(client, new Response(ResponseStatus.OK, DataType.JSON, JsonConvert.SerializeObject(state)));
+                    foreach (var c in PlayerClients.Where(c => c != client)) {
+                        state.Player = c.SelectedPlayer;
+                        Send(c, new Request(RequestStatus.WRITE_STATE, DataType.JSON, JsonConvert.SerializeObject(state)));
+                    }
+                } else {
+                    Send(client, new Response(ResponseStatus.NOT_READY, DataType.TEXT, "GAME NOT STARTED"));
+                }
             }
+        }
+        static void Send(Client client, Transfer transfer) {
+            client.Protocol.Send(transfer);
+            Console.WriteLine($"{DateTime.Now}\t[{serverEndPoint} --> {client.IPAddress}]\t{client.Protocol.GetMessage(transfer)}");
+        }
+        static Transfer Receive(Client client, int msgSizeOverride = 0) {
+            if(msgSizeOverride == 0) {
+                msgSizeOverride = client.Protocol.MsgSize;
+            }
+
+            Transfer transfer = client.Protocol.Receive();
+            Console.WriteLine($"{DateTime.Now}\t[{serverEndPoint} <-- {client.IPAddress}]\t{client.Protocol.GetMessage(transfer)}");
+
+            return transfer;
         }
         static void ConnectToMasterServer() {
             masterServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);

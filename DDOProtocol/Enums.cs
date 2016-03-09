@@ -25,6 +25,7 @@
         GET_ACCOUNT_PLAYERS,
         SELECT_PLAYER,
         GET_STATE,
+        WRITE_STATE,
         GET_PLAYER,
         START,
         LOGIN,
