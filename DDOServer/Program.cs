@@ -185,11 +185,22 @@ namespace DDOServer {
                             players.Add(player);
                         }
                     }
+                    SetPlayersIds(players);
                     map = Map.Load(players.ToArray());
                     gameStarted = true;
 
                     SendStates();
                 }
+            }
+        }
+
+        static void SetPlayersIds(List<Player> playerList)
+        {
+            int count = 1;
+            if(count < 5)
+            foreach (var player in playerList)
+            {
+                player.Id = count++;
             }
         }
         static void SendStates(Client excludedClient = null) {

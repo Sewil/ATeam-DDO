@@ -243,7 +243,28 @@ namespace DDOClient
                         } else if (mapCharArray[y, x] == '@') {
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.Write("@");
-                        } else if (mapCharArray[y, x] == 'P') {
+                        }
+                        else if (mapCharArray[y, x] == 'F')
+                        {
+                            Console.ForegroundColor = ConsoleColor.Blue;
+                            Console.Write("F");
+                        }
+                        else if (mapCharArray[y, x] == 'G')
+                        {
+                            Console.ForegroundColor = ConsoleColor.Cyan;
+                            Console.Write("G");
+                        }
+                        else if (mapCharArray[y, x] == 'L')
+                        {
+                            Console.ForegroundColor = ConsoleColor.DarkRed;
+                            Console.Write("L");
+                        }
+                        else if (mapCharArray[y, x] == 'I')
+                        {
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
+                            Console.Write("I");
+                        }
+                        else if (mapCharArray[y, x] == 'P') {
                             Console.ForegroundColor = ConsoleColor.Red;
                             Console.Write("P");
                         } else if (mapCharArray[y, x] == 'M') {
