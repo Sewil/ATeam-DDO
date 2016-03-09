@@ -2,36 +2,22 @@
 
 namespace DDOServer
 {
-    public abstract class Character
+    internal abstract class Character
     {
+        public int X { get; set; }
+        public int Y { get; set; }
+        public int MaxHealth { get; set; }
         public string Name { get; set; }
         public int Damage { get; set; }
-        int health;
-        public int Health
-        {
-            get
-            {
-                return health;
-            }
-            set
-            {
-                health = value;
-                if (health <= 0)
-                {
-                    OnDied();
-                }
-            }
-        }
+        public int Health { get; set; }
         public ConsoleColor Color { get; set; }
         public int Gold { get; set; }
-        public event Action<Character> Died;
-        public void OnDied()
-        {
-            Died?.Invoke(this);
-        }
-        public void DiedUnsubscribe()
-        {
-            Died = null;
+        public Character(string name, int health, int damage, int gold) {
+            MaxHealth = health;
+            Health = MaxHealth;
+            Damage = damage;
+            Name = name;
+            Gold = gold;
         }
     }
 }

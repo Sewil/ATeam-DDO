@@ -63,6 +63,10 @@
       <Project>{d4e49804-188b-4707-bfc3-1469fa75658b}</Project>
       <Name>DDOProtocol</Name>
     </ProjectReference>
+    <ProjectReference Include="..\DDOServer\DDOServer.csproj">
+      <Project>{e42ef4cf-b72a-4bd0-b16c-148d9afe7f6c}</Project>
+      <Name>DDOServer</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

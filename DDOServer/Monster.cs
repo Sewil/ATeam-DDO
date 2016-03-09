@@ -6,15 +6,11 @@ using System.Threading.Tasks;
 
 namespace DDOServer
 {
-    class Monster : Character
+    internal class Monster : Character
     {
-        public const int HEALTH = 10;
-        public const int DAMAGE = 2;
-        public Monster()
+        public Monster(string name, int health, int damage, int gold) : base(name, health, damage, gold)
         {
             Color = ConsoleColor.DarkRed;
-            Health = HEALTH;
-            Damage = DAMAGE;
         }
     }
 }
