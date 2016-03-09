@@ -15,10 +15,16 @@ namespace DDOServer {
         public string MapStr { get; set; }
         public DDODatabase.Player Player { get; set; }
     }
-    public class Message {
-        public DateTime Sent { get; set; }
-        public string Content { get; set; }
-        public string PlayerName { get; set; }
+    public class ChatMessage {
+        public DateTime Sent { get; }
+        public string Content { get; }
+        public string PlayerName { get; }
+
+        public ChatMessage(DateTime sent, string content, string playerName) {
+            Sent = sent;
+            Content = content;
+            PlayerName = playerName;
+        }
     }
     public class Client {
         public bool IsHeard { get; set; }
@@ -135,12 +141,25 @@ namespace DDOServer {
         }
         static void HandleClientRequest(Client client, Request request) {
             switch (request.Status) {
+                case RequestStatus.SEND_CHAT_MESSAGE: SendChatMessage(client, request); break;
                 case RequestStatus.MOVE: MovePlayer(client, request); break;
                 case RequestStatus.LOGIN: Login(client, request); break;
                 case RequestStatus.GET_STATE: GetState(client, request); break;
                 case RequestStatus.GET_PLAYER: GetPlayerInfo(client, request); break;
                 case RequestStatus.GET_ACCOUNT_PLAYERS: GetAccountPlayers(client, request); break;
                 case RequestStatus.SELECT_PLAYER: SelectPlayer(client, request); break;
+            }
+        }
+
+        static void SendChatMessage(Client client, Request request) {
+            if (request.Status == RequestStatus.SEND_CHAT_MESSAGE && request.DataType == DataType.JSON && client.HasSelectedPlayer) {
+                Send(client, new Response(ResponseStatus.OK));
+                var r = new Request(RequestStatus.SEND_CHAT_MESSAGE, DataType.JSON, request.Data);
+                foreach (var c in PlayerClients.Where(c => c != client)) {
+                    Send(c, r);
+                }
+            } else {
+                Send(client, new Response(ResponseStatus.BAD_REQUEST));
             }
         }
 
@@ -264,16 +283,16 @@ namespace DDOServer {
                 }
             }
         }
-        static void Send(Client client, Transfer transfer) {
-            client.Protocol.Send(transfer);
-            Console.WriteLine($"{DateTime.Now}\t[{serverEndPoint} --> {client.IPAddress}]\t{client.Protocol.GetMessage(transfer)}");
+        static void Send(Client client, Message message) {
+            client.Protocol.Send(message);
+            Console.WriteLine($"{DateTime.Now}\t[{serverEndPoint} --> {client.IPAddress}]\t{client.Protocol.GetMessage(message)}");
         }
-        static Transfer Receive(Client client, int msgSizeOverride = 0) {
+        static Message Receive(Client client, int msgSizeOverride = 0) {
             if(msgSizeOverride == 0) {
                 msgSizeOverride = client.Protocol.MsgSize;
             }
 
-            Transfer transfer = client.Protocol.Receive();
+            Message transfer = client.Protocol.Receive();
             Console.WriteLine($"{DateTime.Now}\t[{serverEndPoint} <-- {client.IPAddress}]\t{client.Protocol.GetMessage(transfer)}");
 
             return transfer;

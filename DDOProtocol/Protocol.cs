@@ -20,7 +20,7 @@ namespace DDOProtocol
             MsgSize = msgSize;
             Socket = socket;
         }
-        public Transfer Receive(int msgSizeOverride = 0)
+        public Message Receive(int msgSizeOverride = 0)
         {
             if (msgSizeOverride == 0)
             {
@@ -59,7 +59,7 @@ namespace DDOProtocol
                 throw new ArgumentException("Couldn't receive invalid string.");
             }
         }
-        public string GetMessage(Transfer transfer)
+        public string GetMessage(Message transfer)
         {
             string message = string.Empty;
             if (transfer.Method == TransferMethod.REQUEST)
@@ -73,7 +73,7 @@ namespace DDOProtocol
             }
             return message;
         }
-        public void Send(Transfer transfer)
+        public void Send(Message transfer)
         {
             Socket.Send(Encoding.GetBytes(GetMessage(transfer)));
         }

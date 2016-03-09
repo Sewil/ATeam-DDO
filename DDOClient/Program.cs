@@ -14,13 +14,15 @@ namespace DDOClient
     class Program
     {
         static readonly object locker = new object();
-        static List<Message> chatLog = new List<Message>();
+        static List<ChatMessage> chatLog = new List<ChatMessage>();
         const int BUFFERLENGTHMAP = 2000;
         static Socket client = null;
         static IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8000);
         static Protocol protocol = null;
         static Response serverResponse = null;
         static bool gameStarted = false;
+        static State state = null;
+        static bool chatOpen = false;
         static void Main(string[] args)
         {
             Thread.Sleep(1000);
@@ -48,7 +50,6 @@ namespace DDOClient
 
                 Console.Clear();
                 Login();
-
                 if (SelectPlayer())
                 {
                     Console.WriteLine("Waiting for players...");
@@ -60,9 +61,17 @@ namespace DDOClient
                     while (true)
                     {
                         var key = Console.ReadKey().Key;
-                        TryPlayerMove(key);
+
+                        if(key == ConsoleKey.C) {
+                            serverRequest -= StateWriter;
+                            OpenChat();
+                            serverRequest += StateWriter;
+                        } else {
+                            TryPlayerMove(key);
+                        }
                         State state = GetState();
                         if (state != null) {
+                            Program.state = state;
                             WriteState(state);
                         }
                     }
@@ -79,16 +88,61 @@ namespace DDOClient
 
             Console.ReadLine();
         }
+        static void RefreshChat() {
+            Console.Clear();
+            Console.WriteLine("CHAT\n---------------------------");
+            foreach (var message in chatLog) {
+                Console.WriteLine($"({message.Sent.ToString("HH:mm:ss")}) {message.PlayerName}: {message.Content}");
+            }
+        }
+        static void OpenChat() {
+            chatOpen = true;
+            while (true) {
+                RefreshChat();
 
+                string content = ReadLineWithCancel();
+                if (content == null) {
+                    break;
+                } else {
+                    var message = new ChatMessage(DateTime.Now, content, state.Player.Name);
+                    chatLog.Add(message);
+                    var r = ServerRequest(new Request(RequestStatus.SEND_CHAT_MESSAGE, DataType.JSON, JsonConvert.SerializeObject(message)));
+                    if(r.Status != ResponseStatus.OK) {
+                        Console.WriteLine("Couldn't send message. Press anywhere to continue...");
+                        Console.ReadKey(true);
+                    }
+                }
+            }
+            chatOpen = false;
+        }
+        static string ReadLineWithCancel() {
+            var buffer = new StringBuilder();
+
+            var info = Console.ReadKey(true);
+            while (info.Key != ConsoleKey.Escape && info.Key != ConsoleKey.Enter) {
+                Console.Write(info.KeyChar);
+                buffer.Append(info.KeyChar);
+                info = Console.ReadKey(true);
+            }
+
+            if(info.Key == ConsoleKey.Enter) {
+                return buffer.ToString();
+            } else {
+                return null;
+            }
+        }
         static void GameStarter(Request r) {
             if (r.Status == RequestStatus.START) {
                 gameStarted = true;
             }
         }
         static void ChatLogger(Request r) {
-            if(r.Status == RequestStatus.SEND_CHAT_MESSAGE && r.DataType != DataType.JSON) {
-                var message = JsonConvert.DeserializeObject<Message>(r.Data);
+            if(r.Status == RequestStatus.SEND_CHAT_MESSAGE && r.DataType == DataType.JSON) {
+                var message = JsonConvert.DeserializeObject<ChatMessage>(r.Data);
                 chatLog.Add(message);
+                if (chatOpen) {
+                    RefreshChat();
+                }
             }
         }
 
@@ -110,6 +164,7 @@ namespace DDOClient
         static void StateWriter(Request request) {
             if(request.Status == RequestStatus.WRITE_STATE) {
                 State state = JsonConvert.DeserializeObject<State>(request.Data);
+                Program.state = state;
                 WriteState(state);
             }
         }
@@ -178,12 +233,12 @@ namespace DDOClient
             } else if(r.Status != ResponseStatus.OK) {
                 Console.WriteLine("Couldn't retrieve players from server. Probably because this account doesn't have any players.");
             } else {
-                var players = JsonConvert.DeserializeObject<DDODatabase.Player[]>(r.Data);
+                var players = JsonConvert.DeserializeObject<Player[]>(r.Data);
                 for (int i = 0; i < players.Length; i++) {
                     Console.WriteLine($"{i} - {players[i].Name}");
                 }
                 Console.WriteLine("Type in the number of your player: ");
-                DDODatabase.Player player = players[int.Parse(Console.ReadLine())];
+                Player player = players[int.Parse(Console.ReadLine())];
 
                 r = ServerRequest(new Request(RequestStatus.SELECT_PLAYER, DataType.JSON, JsonConvert.SerializeObject(player)));
 
@@ -259,10 +314,6 @@ namespace DDOClient
                     }
 
                     Console.WriteLine();
-                }
-
-                foreach (var message in chatLog) {
-                    Console.WriteLine($"({message.Sent.ToString("HH:mm:ss")}) {message.PlayerName}: {message.Content}");
                 }
 
                 Console.BackgroundColor = ConsoleColor.Black;
