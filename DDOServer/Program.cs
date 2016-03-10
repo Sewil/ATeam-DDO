@@ -13,11 +13,15 @@ using Newtonsoft.Json;
 namespace DDOServer {
     public class State {
         public string MapStr { get; }
-        public Player[] Players { get; }
+        public List<Player> Players { get; }
+        public List<Monster> Monsters { get; set; }
+        public List<Potion> Potions { get; set; }
         public DDODatabase.Player Player { get; set; }
-        public State(string mapStr, Player[] players, DDODatabase.Player player) {
+        public State(string mapStr, List<Player> players, List<Monster> monsters, List<Potion> potions, DDODatabase.Player player) {
             MapStr = mapStr;
             Players = players;
+            Monsters = monsters;
+            Potions = potions;
             Player = player;
         }
     }
@@ -63,7 +67,7 @@ namespace DDOServer {
         static IPEndPoint masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
 
         const int MAX_LOGGED_IN_CLIENTS = 5;
-        const int MINIMUM_PLAYERS = 2;
+        const int MINIMUM_PLAYERS = 1;
         const int MAX_CONNECTED_CLIENTS = 10;
         static List<Client> clients = new List<Client>();
         static IEnumerable<Client> LoggedInClients {
@@ -232,7 +236,7 @@ namespace DDOServer {
             }
         }
         static void SendStates(Client excludedClient = null) {
-            State state = new State(map.MapToString(), map.players, null);
+            State state = new State(map.MapToString(), map.players, map.monsters, map.potions, null);
             foreach (var c in PlayerClients.Where(c => c != excludedClient)) {
                 state.Player = c.SelectedPlayer;
                 Send(c, new Request(RequestStatus.WRITE_STATE, DataType.JSON, JsonConvert.SerializeObject(state)));
@@ -295,7 +299,7 @@ namespace DDOServer {
         static void GetState(Client client, Request request) {
             lock (locker) {
                 if (request.Status == RequestStatus.GET_STATE && gameStarted) {
-                    State state = new State(map.MapToString(), map.players, client.SelectedPlayer);
+                    State state = new State(map.MapToString(), map.players, map.monsters, map.potions, client.SelectedPlayer);
                     Send(client, new Response(ResponseStatus.OK, DataType.JSON, JsonConvert.SerializeObject(state)));
                     SendStates(client);
                 } else {

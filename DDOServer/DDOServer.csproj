@@ -60,7 +60,7 @@
     <Compile Include="Character.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Enums.cs" />
-    <Compile Include="HealthPotion.cs" />
+    <Compile Include="Potion.cs" />
     <Compile Include="Map.cs" />
     <Compile Include="MapFactory.cs" />
     <Compile Include="Monster.cs" />

@@ -1,50 +1,30 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Threading;
+using System.Linq;
 
 namespace DDOServer
 {
     internal class Map
     {
-        long spawnTimeMonster;
-        long spawnTimeHealthPotion;
         const int GOLD_ROUND_TURNS = 50;
-        const int MONSTER_SPAWN_TURNS = 5;
-        public const int MAXSPAWNEDMONSTERS = 10;
-        public const int MAXSPAWNEDHEALTHPOTIONS = 10;
-        int turn;
-        public int monsterCount;
-        public int SpawnedMonsters { get; set; }
-        public int SpawnedHealthPotions { get; set; }
-        public int Turn
-        {
-            get
-            {
-                return turn;
-            }
-            set
-            {
-                turn = value;
-                if (turn % GOLD_ROUND_TURNS == 0)
-                {
-                    OnGoldRound(this);
-                }
-                if (turn % MONSTER_SPAWN_TURNS == 0 && monsterCount >= 10)
-                {
-                    OnMonsterSpawn(new Monster("Scary",10,10,0));
-                    monsterCount++;
-                }
-            }
-        }
-        public Player[] players;
+        const int MAX_MONSTERS = 10;
+        const int MAX_POTIONS = 10;
+        const long SPAWN_TIME_MONSTER_MS = 15000;
+        const long SPAWN_TIME_POTION_MS = 30000;
+        const long SPAWN_TIME_GOLD = 60000;
+        static Random random = new Random();
 
+        public List<Player> players = new List<Player>();
+        public List<Potion> potions = new List<Potion>();
         public List<Monster> monsters = new List<Monster>();
         public const int WIDTH = 75;
         public const int HEIGHT = 20;
         public Cell[,] Cells = new Cell[HEIGHT, WIDTH];
         const double FOREST_CHANCE = 0.5;
-        private Map()
+        private Map(Player[] players)
         {
-            var random = new Random();
+            this.players = players.ToList();
             for (int y = 0; y < HEIGHT; y++)
             {
                 for (int x = 0; x < WIDTH; x++)
@@ -63,34 +43,15 @@ namespace DDOServer
             {
                 Cells = DoSimulationStep();
             }
+
+            new Thread(new ParameterizedThreadStart(MonsterSpawner)).Start();
+            new Thread(new ParameterizedThreadStart(PotionSpawner)).Start();
+            new Thread(new ParameterizedThreadStart(GoldSpawner)).Start();
         }
-        public event Action<Map> GoldRound;
-        public event Action<Map,Monster> MonsterSpawn;
-        public void OnGoldRound(Map m)
-        {
-            GoldRound?.Invoke(m);
-        }
-        public void OnMonsterSpawn(Monster m)
-        {
-            MonsterSpawn?.Invoke(this, m);
-        }    
         public static Map Load(params Player[] players)
         {
-            var map = new Map
-            {
-                players = players
-            };
-            map.MonsterSpawn += (m,ms) =>
-            {
-                m.SpawnMonster(ms);
-            };
-            map.GoldRound += (m) =>
-            {
-                m.PlaceGold();
-            };
-            map.PlaceGold();
-            map.SpawnPlayers(players);
-
+            var map = new Map(players);
+            map.SpawnCharacters(players);
             return map;
         }
         int CountForestNeighbors(int y, int x)
@@ -141,20 +102,23 @@ namespace DDOServer
                 for (int x = 0; x < WIDTH; x++)
                 {
                     var cell = Cells[y, x];
+                    var character = cell.GetCharacter(this);
+                    var potion = cell.GetPotion(this);
+
                     if (cell.HasGold)
                     {
                         mapStr += "$";
                     }
-                    else if (cell.HasPlayer(players))
+                    else if (character != null && character is Player)
                     {
-                        var player = cell.GetPlayer(players);
+                        var player = cell.GetPlayer(this);
                         mapStr += player.Icon.Key;
                     }
-                    else if (cell.HasHealthPotion)
+                    else if (potion != null)
                     {
                         mapStr += "P";
                     }
-                    else if (cell.HasMonster(monsters.ToArray()))
+                    else if (character != null && character is Monster)
                     {
                         mapStr += "M";
                     }
@@ -170,78 +134,82 @@ namespace DDOServer
             }
             return mapStr;
         }
-        double goldChance = 0.1;
-        int[] goldRange = { 100, 1000 };
-        public void PlaceGold()
-        {
-            var random = new Random();
-            foreach (var cell in Cells)
-            {
-                if (cell.IsWalkable(players) && cell.IsWalkable(monsters.ToArray()) && random.NextDouble() <= goldChance)
-                {
-                    cell.Gold += random.Next(goldRange[0], goldRange[1] + 1);
+
+        public void GoldSpawner(object arg) {
+            double goldChance = 0.1;
+            int[] goldRange = { 100, 1000 };
+            double lastSpawn = 0.0;
+
+            while (true) {
+                if (TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds - lastSpawn > SPAWN_TIME_GOLD) {
+                    lock (Cells) {
+                        foreach (var cell in Cells) {
+                            if (cell.IsWalkable(this) && random.NextDouble() <= goldChance) {
+                                cell.Gold += random.Next(goldRange[0], goldRange[1] + 1);
+                            }
+                        }
+
+                        lastSpawn = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
+                    }
                 }
             }
         }
-        public void SpawnPlayers(params Player[] players)
+        public void SpawnCharacters(params Character[] characters)
         {
-            var random = new Random();
-            foreach (var player in players)
+            foreach (var character in characters)
             {
                 List<Cell> emptyCells = new List<Cell>();
-                foreach (var c in Cells)
-                {
-                    if (c.IsSpawnable(this.players) && c.IsSpawnable(monsters.ToArray()))
-                    {
-                        emptyCells.Add(c);
+                lock (Cells) {
+                    foreach (var c in Cells) {
+                        if (c.IsSpawnable(this)) {
+                            emptyCells.Add(c);
+                        }
                     }
                 }
                 if (emptyCells.Count > 0)
                 {
                     var randomCell = emptyCells[random.Next(0, emptyCells.Count)];
-                    player.X = randomCell.X;
-                    player.Y = randomCell.Y;
+                    character.X = randomCell.X;
+                    character.Y = randomCell.Y;
                 }
-                else
+                else if(character is Player)
                 {
-                    throw new Exception("Error spawning player. No free cells.");
+                    throw new Exception("Error spawning character. No empty cells.");
                 }
             }
         }
-        public void SpawnHealthPotion()
+        public void PotionSpawner(object arg)
         {
-            // Place in infinite loop if we want to thread it in background
-            if (DateTime.Now.Ticks > spawnTimeHealthPotion)
-            {
-                var random = new Random();
-                var availableCells = new List<Cell>();
-                foreach (var c in Cells)
+            double lastSpawn = 0.0;
+            while (true) {
+                if (TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds - lastSpawn > SPAWN_TIME_POTION_MS && potions.Count < MAX_POTIONS)
                 {
-                    if (c.IsSpawnable(players) && c.IsSpawnable(monsters.ToArray()) && SpawnedHealthPotions < MAXSPAWNEDHEALTHPOTIONS)
-                        availableCells.Add(c);
+                    var availableCells = new List<Cell>();
+                    lock (Cells) {
+                        foreach (var cell in Cells) {
+                            if (cell.IsSpawnable(this)) {
+                                availableCells.Add(cell);
+                            }
+                        }
+                    }
+
+                    var randomCell = availableCells[random.Next(0, availableCells.Count)];
+                    var potion = new Potion(randomCell.X, randomCell.Y);
+                    potions.Add(potion);
+                    lastSpawn = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
                 }
-                var randomCell = availableCells[random.Next(0, availableCells.Count)];
-                randomCell.HealthPotion = new HealthPotion();
-                SpawnedHealthPotions += 1;
-                spawnTimeHealthPotion = DateTime.Now.Ticks + 50000000;
             }
         }
-        public void SpawnMonster(Monster m)
+        public void MonsterSpawner(object arg)
         {
-            // Place in infinite loop if we want to thread it in background
-            if (DateTime.Now.Ticks > spawnTimeMonster)
-            {
-                var rnd = new Random();
-                var emptyCells = new List<Cell>();
-                foreach (var c in Cells)
-                {
-                    if (c.IsSpawnable(players) && c.IsSpawnable(monsters.ToArray()) && monsters.Count < MAXSPAWNEDMONSTERS)
-                        emptyCells.Add(c);
+            double lastSpawn = 0.0;
+            while (true) {
+                if (TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds - lastSpawn > SPAWN_TIME_MONSTER_MS && monsters.Count < MAX_MONSTERS) {
+                    var monster = new Monster("Bu", random.Next(20, 40), random.Next(5, 12), random.Next(0, 1000));
+                    SpawnCharacters(monster);
+                    monsters.Add(monster);
+                    lastSpawn = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
                 }
-                var rndCell = emptyCells[rnd.Next(0, emptyCells.Count)];
-                monsters.Add(m);
-                SpawnedMonsters += 1;
-                spawnTimeMonster = DateTime.Now.Ticks + 50000000;
             }
         }
         public void MovePlayer(string direction, string playerName)
@@ -284,26 +252,45 @@ namespace DDOServer
             }
             if (newCell != null)
             {
-                Turn++;
-                if (newCell.HasPlayer(players))
+                var newPlayer = newCell.GetPlayer(this);
+                var newPotion = newCell.GetPotion(this);
+                var newMonster = newCell.GetMonster(this);
+
+                if (newPlayer != null)
                 {
-                    var p = newCell.GetPlayer(players);
-                    p.Health -= player.Damage;
-                    if(p.Health <= 0) {
-                        newCell.Gold += p.Gold;
-                        SpawnPlayers(p);
+                    newPlayer.Health -= player.Damage;
+                    if(newPlayer.Health <= 0) {
+                        newCell.Gold += newPlayer.Gold;
+                        SpawnCharacters(newPlayer);
+                        player.X = newCell.X;
+                        player.Y = newCell.Y;
                     }
                 }
-                else if (newCell.HasMonster(monsters.ToArray()))
+                else if (newMonster != null)
                 {
-                    newCell.GetMonster(monsters.ToArray()).Health -= currentCell.GetPlayer(players).Damage;
+                    newMonster.Health -= player.Damage;
+                    if(newMonster.Health <= 0) {
+                        player.Gold = newMonster.Gold;
+                        monsters.Remove(newMonster);
+                        newMonster = null;
+                        player.X = newCell.X;
+                        player.Y = newCell.Y;
+                    }
                 }
-                else if (newCell.IsWalkable(players) && newCell.IsWalkable(monsters.ToArray()))
+                else if (newPotion != null)
                 {
+                    player.Health += newPotion.Health;
+                    potions.Remove(newPotion);
+                    newPotion = null;
                     player.X = newCell.X;
                     player.Y = newCell.Y;
+                }
+                else if (newCell.IsWalkable(this))
+                {
                     player.Gold += newCell.Gold;
                     newCell.Gold = 0;
+                    player.X = newCell.X;
+                    player.Y = newCell.Y;
                 }
             }
         }

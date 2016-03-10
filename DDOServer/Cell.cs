@@ -5,8 +5,6 @@ namespace DDOServer
     internal class Cell
     {
         public CellType CellType { get; }
-        public HealthPotion HealthPotion { get; set; }
-        public bool HasHealthPotion { get { return HealthPotion != null; } }
         public bool HasGold { get { return Gold > 0; } }
         public int Gold { get; set; }
         public int Y { get; }
@@ -18,35 +16,46 @@ namespace DDOServer
             X = x;
             CellType = cellType;
         }
-        public Character GetCharacter(Character[] characters) {
-            foreach (var c in characters) {
-                if (c.X == X && c.Y == Y) {
-                    return c;
+        public Potion GetPotion(Map map) {
+            lock (map.potions) {
+                foreach (var potion in map.potions) {
+                    if (potion.X == X && potion.Y == Y) {
+                        return potion;
+                    }
                 }
             }
 
             return null;
         }
-        public Monster GetMonster(Monster[] monsters) {
-            return GetCharacter(monsters) as Monster;
+        public Character GetCharacter(Map map) {
+            lock (map.players) {
+                foreach (var c in map.players) {
+                    if (c.X == X && c.Y == Y) {
+                        return c;
+                    }
+                }
+            }
+            lock (map.monsters) {
+                foreach (var c in map.monsters) {
+                    if (c.X == X && c.Y == Y) {
+                        return c;
+                    }
+                }
+            }
+
+            return null;
         }
-        public Player GetPlayer(Player[] players) {
-            return GetCharacter(players) as Player;
+        public Monster GetMonster(Map map) {
+            return GetCharacter(map) as Monster;
         }
-        public bool IsSpawnable(params Character[] characters) {
-            return IsWalkable(characters) && !HasGold && !HasHealthPotion;
+        public Player GetPlayer(Map map) {
+            return GetCharacter(map) as Player;
         }
-        public bool IsWalkable(params Character[] characters) {
-            return CellType == CellType.Ground && !HasCharacter(characters);
+        public bool IsSpawnable(Map map) {
+            return IsWalkable(map) && !HasGold && GetPotion(map)==null;
         }
-        public bool HasCharacter(params Character[] characters) {
-            return GetCharacter(characters) != null;
-        }
-        public bool HasPlayer(params Player[] players) {
-            return HasCharacter(players);
-        }
-        public bool HasMonster(params Monster[] monsters) {
-            return HasCharacter(monsters);
+        public bool IsWalkable(Map map) {
+            return CellType == CellType.Ground && GetCharacter(map)==null;
         }
     }
 }
