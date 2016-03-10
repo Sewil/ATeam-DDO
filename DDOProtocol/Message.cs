@@ -11,7 +11,7 @@ namespace DDOProtocol
         public string Data { get; }
         public DataType DataType { get; }
         public TransferMethod Method { get; protected set; }
-        public Message(DataType dataType = DataType.NONE, string data = null)
+        public Message(DataType dataType = DataType.None, string data = null)
         {
             DataType = dataType;
             Data = data;

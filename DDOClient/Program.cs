@@ -68,11 +68,6 @@ namespace DDOClient
                         } else {
                             TryPlayerMove(key);
                         }
-                        State state = GetState();
-                        if (state != null) {
-                            Program.state = state;
-                            WriteState(state);
-                        }
                     }
                 }
                 else
@@ -105,7 +100,7 @@ namespace DDOClient
                 } else {
                     var message = new ChatMessage(DateTime.Now, content, state.Player.Name);
                     chatLog.Add(message);
-                    var r = ServerRequest(new Request(RequestStatus.SEND_CHAT_MESSAGE, DataType.JSON, JsonConvert.SerializeObject(message)));
+                    var r = ServerRequest(new Request(RequestStatus.SendChatMessage, DataType.Json, JsonConvert.SerializeObject(message)));
                     if(r.Status != ResponseStatus.OK) {
                         Console.WriteLine("Couldn't send message. Press anywhere to continue...");
                         Console.ReadKey(true);
@@ -131,12 +126,12 @@ namespace DDOClient
             }
         }
         static void GameStarter(Request r) {
-            if (r.Status == RequestStatus.START) {
+            if (r.Status == RequestStatus.Start) {
                 gameStarted = true;
             }
         }
         static void ChatLogger(Request r) {
-            if(r.Status == RequestStatus.SEND_CHAT_MESSAGE && r.DataType == DataType.JSON) {
+            if(r.Status == RequestStatus.SendChatMessage && r.DataType == DataType.Json) {
                 var message = JsonConvert.DeserializeObject<ChatMessage>(r.Data);
                 chatLog.Add(message);
                 if (chatOpen) {
@@ -161,7 +156,7 @@ namespace DDOClient
             }
         }
         static void StateWriter(Request request) {
-            if(request.Status == RequestStatus.WRITE_STATE) {
+            if(request.Status == RequestStatus.WriteState) {
                 State state = JsonConvert.DeserializeObject<State>(request.Data);
                 Program.state = state;
                 WriteState(state);
@@ -173,7 +168,7 @@ namespace DDOClient
             masterServer.Connect(serverEndPoint);
             protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 2000, masterServer);
 
-            protocol.Send(new Request(RequestStatus.NONE, DataType.TEXT, "list"));
+            protocol.Send(new Request(RequestStatus.None, DataType.Text, "list"));
             var r = protocol.Receive() as Response;
             var response = r.Data.TrimStart(' ').Split(' ');
             Console.WriteLine("List of servers:");
@@ -202,7 +197,7 @@ namespace DDOClient
                 Console.Write("Password: ");
                 string password = Console.ReadLine();
 
-                response = ServerRequest(new Request(RequestStatus.LOGIN, DataType.TEXT, $"{username} {password}"));
+                response = ServerRequest(new Request(RequestStatus.Login, DataType.Text, $"{username} {password}"));
 
                 Console.WriteLine(response.Status);
                 Console.ReadKey();
@@ -225,9 +220,9 @@ namespace DDOClient
         }
         static bool SelectPlayer()
         {
-            Response r = ServerRequest(new Request(RequestStatus.GET_ACCOUNT_PLAYERS));
+            Response r = ServerRequest(new Request(RequestStatus.GetAccountPlayers));
 
-            if(r.DataType != DataType.JSON) {
+            if(r.DataType != DataType.Json) {
                 Console.WriteLine("Corrupt response from server. Invalid datatype.");
             } else if(r.Status != ResponseStatus.OK) {
                 Console.WriteLine("Couldn't retrieve players from server. Probably because this account doesn't have any players.");
@@ -239,7 +234,7 @@ namespace DDOClient
                 Console.WriteLine("Type in the number of your player: ");
                 DDODatabase.Player player = players[int.Parse(Console.ReadLine())];
 
-                r = ServerRequest(new Request(RequestStatus.SELECT_PLAYER, DataType.JSON, JsonConvert.SerializeObject(player)));
+                r = ServerRequest(new Request(RequestStatus.SelectPlayer, DataType.Json, JsonConvert.SerializeObject(player)));
 
                 if (r.Status == ResponseStatus.OK) {
                     return true;
@@ -255,19 +250,19 @@ namespace DDOClient
             switch (key)
             {
                 case ConsoleKey.UpArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(MoveDirection.UP)));
+                    protocol.Send(new Request(RequestStatus.Move, DataType.Json, JsonConvert.SerializeObject(Direction.Up)));
                     break;
 
                 case ConsoleKey.RightArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(MoveDirection.RIGHT)));
+                    protocol.Send(new Request(RequestStatus.Move, DataType.Json, JsonConvert.SerializeObject(Direction.Right)));
                     break;
 
                 case ConsoleKey.DownArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(MoveDirection.DOWN)));
+                    protocol.Send(new Request(RequestStatus.Move, DataType.Json, JsonConvert.SerializeObject(Direction.Down)));
                     break;
 
                 case ConsoleKey.LeftArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(MoveDirection.LEFT)));
+                    protocol.Send(new Request(RequestStatus.Move, DataType.Json, JsonConvert.SerializeObject(Direction.Left)));
                     break;
             }
             ServerReceive();
@@ -329,8 +324,8 @@ namespace DDOClient
         }
         static State GetState()
         {
-            var r = ServerRequest(new Request(RequestStatus.GET_STATE));
-            if (r.DataType == DataType.JSON && r.Status == ResponseStatus.OK) {
+            var r = ServerRequest(new Request(RequestStatus.GetState));
+            if (r.DataType == DataType.Json && r.Status == ResponseStatus.OK) {
                 var state = JsonConvert.DeserializeObject<State>(r.Data);
                 return state;
             } else {

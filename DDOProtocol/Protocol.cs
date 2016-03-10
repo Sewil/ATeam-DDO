@@ -44,12 +44,12 @@ namespace DDOProtocol
                     message += attributes[i];
                 }
             }
-            if (method == TransferMethod.REQUEST)
+            if (method == TransferMethod.Request)
             {
                 RequestStatus status = (RequestStatus)Enum.Parse(typeof(RequestStatus), attributes[3]);
                 return new Request(status, dataType, message);
             }
-            else if (method == TransferMethod.RESPONSE)
+            else if (method == TransferMethod.Response)
             {
                 ResponseStatus status = (ResponseStatus)Enum.Parse(typeof(ResponseStatus), attributes[3]);
                 return new Response(status, dataType, message);
@@ -62,7 +62,7 @@ namespace DDOProtocol
         public string GetMessage(Message transfer)
         {
             string message = string.Empty;
-            if (transfer.Method == TransferMethod.REQUEST)
+            if (transfer.Method == TransferMethod.Request)
             {
                 message = $"{transfer.Method} {transfer.DataType} {Name} {(transfer as Request).Status} {transfer.Data}";
             }

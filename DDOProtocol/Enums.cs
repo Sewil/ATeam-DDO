@@ -1,35 +1,36 @@
 ﻿namespace DDOProtocol
 {
     public enum TransferMethod {
-        REQUEST,
-        RESPONSE
+        Request,
+        Response
     }
     public enum DataType {
-        NONE,
-        TEXT,
-        JSON,
-        XML
+        None,
+        Text,
+        Json,
+        Xml
     }
     public enum ResponseStatus {
+        None,
         OK,
-        LIMIT_REACHED,
-        UNAUTHORIZED,
-        OUT_OF_BOUNDS,
-        NOT_FOUND,
-        NOT_READY,
-        BAD_REQUEST
+        LimitReached,
+        Unauthorized,
+        OutOfBounds,
+        NotFound,
+        NotReady,
+        BadRequest
     }
     public enum RequestStatus
     {
-        NONE,
-        GET_ACCOUNT_PLAYERS,
-        SELECT_PLAYER,
-        GET_STATE,
-        WRITE_STATE,
-        GET_PLAYER,
-        START,
-        LOGIN,
-        MOVE,
-        SEND_CHAT_MESSAGE
+        None,
+        GetAccountPlayers,
+        SelectPlayer,
+        GetState,
+        WriteState,
+        GetPlayer,
+        Start,
+        Login,
+        Move,
+        SendChatMessage
     }
 }

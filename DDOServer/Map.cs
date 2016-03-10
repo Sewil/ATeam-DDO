@@ -5,9 +5,6 @@ using System.Linq;
 
 namespace DDOServer
 {
-    public enum MoveDirection {
-        UP, RIGHT, DOWN, LEFT
-    }
     internal class Map
     {
         const int GOLD_ROUND_TURNS = 50;
@@ -48,6 +45,7 @@ namespace DDOServer
             }
 
             new Thread(new ParameterizedThreadStart(MonsterSpawner)).Start();
+            new Thread(new ParameterizedThreadStart(MonsterMover)).Start();
             new Thread(new ParameterizedThreadStart(PotionSpawner)).Start();
             new Thread(new ParameterizedThreadStart(GoldSpawner)).Start();
         }
@@ -97,6 +95,11 @@ namespace DDOServer
             }
             return newCells;
         }
+        public event Action<Map> Changed;
+        public void OnChanged() {
+            Changed?.Invoke(this);
+        }
+
         public string MapToString()
         {
             string mapStr = null;
@@ -151,7 +154,7 @@ namespace DDOServer
                                 cell.Gold += random.Next(goldRange[0], goldRange[1] + 1);
                             }
                         }
-
+                        OnChanged();
                         lastSpawn = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
                     }
                 }
@@ -199,6 +202,7 @@ namespace DDOServer
                     var randomCell = availableCells[random.Next(0, availableCells.Count)];
                     var potion = new Potion(randomCell.X, randomCell.Y);
                     potions.Add(potion);
+                    OnChanged();
                     lastSpawn = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
                 }
             }
@@ -213,48 +217,107 @@ namespace DDOServer
                     lock (monsters) {
                         monsters.Add(monster);
                     }
+                    OnChanged();
                     lastSpawn = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
                 }
             }
         }
-        public void MovePlayer(MoveDirection direction, DDODatabase.Player dbPlayer)
-        {
-            Player player = null;
-            foreach (var p in players) {
-                if(p.Name == dbPlayer.Name) {
-                    player = p;
-                    break;
+        public void MonsterMover(object arg) {
+            int[] moveTimeRange = new int[] { 1000, 5000 };
+            double moveTime = random.Next(moveTimeRange[0], moveTimeRange[1] + 1);
+            double lastMove = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
+            Array directions = Enum.GetValues(typeof(Direction));
+
+            while (true) {
+                if (TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds - lastMove > moveTime && monsters.Count > 0) {
+                    Direction direction = (Direction)directions.GetValue(random.Next(directions.Length));
+                    lock (monsters) {
+                        var monster = monsters[random.Next(monsters.Count)];
+                        MoveMonster(direction, monster);
+                    }
+
+                    moveTime = random.Next(moveTimeRange[0], moveTimeRange[1] + 1);
+                    lastMove = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
                 }
-            }   
-            var currentCell = Cells[player.Y, player.X];
+            }
+        }
+        public Cell NewCell(Direction direction, Character character) {
+            var currentCell = Cells[character.Y, character.X];
             Cell newCell = null;
-            switch (direction)
-            {
-                case MoveDirection.UP:
-                    if (currentCell.Y > 0)
-                    {
+            switch (direction) {
+                case Direction.Up:
+                    if (currentCell.Y > 0) {
                         newCell = Cells[currentCell.Y - 1, currentCell.X];
                     }
                     break;
-                case MoveDirection.RIGHT:
-                    if (currentCell.X < WIDTH - 1)
-                    {
+                case Direction.Right:
+                    if (currentCell.X < WIDTH - 1) {
                         newCell = Cells[currentCell.Y, currentCell.X + 1];
                     }
                     break;
-                case MoveDirection.DOWN:
-                    if (currentCell.Y < HEIGHT - 1)
-                    {
+                case Direction.Down:
+                    if (currentCell.Y < HEIGHT - 1) {
                         newCell = Cells[currentCell.Y + 1, currentCell.X];
                     }
                     break;
-                case MoveDirection.LEFT:
-                    if (currentCell.X > 0)
-                    {
+                case Direction.Left:
+                    if (currentCell.X > 0) {
                         newCell = Cells[currentCell.Y, currentCell.X - 1];
                     }
                     break;
             }
+
+            return newCell;
+        }
+        public void MoveMonster(Direction direction, Monster monster) {
+            Cell currentCell = Cells[monster.Y, monster.X];
+            Cell newCell = NewCell(direction, monster);
+
+            if (newCell != null) {
+                var newPlayer = newCell.GetPlayer(this);
+                var newPotion = newCell.GetPotion(this);
+                var newMonster = newCell.GetMonster(this);
+
+                if (newPlayer != null) {
+                    newPlayer.Health -= monster.Damage;
+                    if (newPlayer.Health <= 0) {
+                        monster.Gold += newPlayer.Gold;
+                        newPlayer.Gold = 0;
+                        SpawnCharacters(newPlayer);
+                        monster.X = newCell.X;
+                        monster.Y = newCell.Y;
+                    }
+                } else if (newPotion != null) {
+                    monster.Health += newPotion.Health;
+                    potions.Remove(newPotion);
+                    newPotion = null;
+                    monster.X = newCell.X;
+                    monster.Y = newCell.Y;
+                } else if (newCell.IsWalkable(this)) {
+                    monster.Gold += newCell.Gold;
+                    newCell.Gold = 0;
+                    monster.X = newCell.X;
+                    monster.Y = newCell.Y;
+                }
+
+                OnChanged();
+            }
+        }
+        public void MovePlayer(Direction direction, DDODatabase.Player dbPlayer)
+        {
+            Player player = null;
+            lock (players) {
+                foreach (var p in players) {
+                    if (p.Name == dbPlayer.Name) {
+                        player = p;
+                        break;
+                    }
+                }
+            }
+
+            Cell currentCell = Cells[player.Y, player.X];
+            Cell newCell = NewCell(direction, player);
+
             if (newCell != null)
             {
                 var newPlayer = newCell.GetPlayer(this);
@@ -303,6 +366,8 @@ namespace DDOServer
             dbPlayer.Health = player.Health;
             dbPlayer.Gold = player.Gold;
             dbPlayer.Damage = player.Damage;
+
+            OnChanged();
         }
     }
 }

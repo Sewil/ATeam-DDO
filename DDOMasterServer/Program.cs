@@ -40,7 +40,7 @@ namespace DDOMasterServer
                     {
                         Console.WriteLine($"Server {i} connected");
                         string idAndPort = i.ToString() + " " + clientPort;
-                        protocol.Send(new Response(ResponseStatus.OK, DataType.TEXT, clientPort.ToString()));
+                        protocol.Send(new Response(ResponseStatus.OK, DataType.Text, clientPort.ToString()));
                         serverList.Add(idAndPort);
                         i++;
                         clientPort++;
@@ -58,7 +58,7 @@ namespace DDOMasterServer
                         {
                             data += " " + server;
                         }
-                        protocol.Send(new Response(ResponseStatus.OK, DataType.TEXT, data));
+                        protocol.Send(new Response(ResponseStatus.OK, DataType.Text, data));
                         i++;
                     }
                 }

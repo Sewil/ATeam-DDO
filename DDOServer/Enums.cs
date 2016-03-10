@@ -2,6 +2,9 @@
 {
     public enum CellType
     {
-        Forest,Ground,
+        Forest, Ground
+    }
+    public enum Direction {
+        Up, Right, Down, Left
     }
 }
