@@ -8,11 +8,11 @@ namespace DDOServer
     {
         static Random random = new Random();
         public static Dictionary<char, ConsoleColor> icons = new Dictionary<char, ConsoleColor>() {
-            {'☻', ConsoleColor.White },
-            {'♥', ConsoleColor.Red },
+            {'♠', ConsoleColor.DarkMagenta },
             {'♦', ConsoleColor.Magenta },
             {'♣', ConsoleColor.DarkGray },
-            {'♠', ConsoleColor.DarkMagenta }
+            {'♥', ConsoleColor.Red },
+            {'☻', ConsoleColor.White }
         };
         public KeyValuePair<char,ConsoleColor> Icon { get; }
         public const int DAMAGE = 5;

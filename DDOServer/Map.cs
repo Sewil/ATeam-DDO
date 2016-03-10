@@ -5,6 +5,9 @@ using System.Linq;
 
 namespace DDOServer
 {
+    public enum MoveDirection {
+        UP, RIGHT, DOWN, LEFT
+    }
     internal class Map
     {
         const int GOLD_ROUND_TURNS = 50;
@@ -207,16 +210,18 @@ namespace DDOServer
                 if (TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds - lastSpawn > SPAWN_TIME_MONSTER_MS && monsters.Count < MAX_MONSTERS) {
                     var monster = new Monster("Bu", random.Next(20, 40), random.Next(5, 12), random.Next(0, 1000));
                     SpawnCharacters(monster);
-                    monsters.Add(monster);
+                    lock (monsters) {
+                        monsters.Add(monster);
+                    }
                     lastSpawn = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
                 }
             }
         }
-        public void MovePlayer(string direction, string playerName)
+        public void MovePlayer(MoveDirection direction, DDODatabase.Player dbPlayer)
         {
             Player player = null;
             foreach (var p in players) {
-                if(p.Name == playerName) {
+                if(p.Name == dbPlayer.Name) {
                     player = p;
                     break;
                 }
@@ -225,25 +230,25 @@ namespace DDOServer
             Cell newCell = null;
             switch (direction)
             {
-                case "↑":
+                case MoveDirection.UP:
                     if (currentCell.Y > 0)
                     {
                         newCell = Cells[currentCell.Y - 1, currentCell.X];
                     }
                     break;
-                case "→":
+                case MoveDirection.RIGHT:
                     if (currentCell.X < WIDTH - 1)
                     {
                         newCell = Cells[currentCell.Y, currentCell.X + 1];
                     }
                     break;
-                case "↓":
+                case MoveDirection.DOWN:
                     if (currentCell.Y < HEIGHT - 1)
                     {
                         newCell = Cells[currentCell.Y + 1, currentCell.X];
                     }
                     break;
-                case "←":
+                case MoveDirection.LEFT:
                     if (currentCell.X > 0)
                     {
                         newCell = Cells[currentCell.Y, currentCell.X - 1];
@@ -260,7 +265,8 @@ namespace DDOServer
                 {
                     newPlayer.Health -= player.Damage;
                     if(newPlayer.Health <= 0) {
-                        newCell.Gold += newPlayer.Gold;
+                        player.Gold += newPlayer.Gold;
+                        newPlayer.Gold = 0;
                         SpawnCharacters(newPlayer);
                         player.X = newCell.X;
                         player.Y = newCell.Y;
@@ -293,6 +299,10 @@ namespace DDOServer
                     player.Y = newCell.Y;
                 }
             }
+
+            dbPlayer.Health = player.Health;
+            dbPlayer.Gold = player.Gold;
+            dbPlayer.Damage = player.Damage;
         }
     }
 }

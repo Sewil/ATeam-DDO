@@ -255,19 +255,19 @@ namespace DDOClient
             switch (key)
             {
                 case ConsoleKey.UpArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "↑"));
+                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(MoveDirection.UP)));
                     break;
 
                 case ConsoleKey.RightArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "→"));
+                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(MoveDirection.RIGHT)));
                     break;
 
                 case ConsoleKey.DownArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "↓"));
+                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(MoveDirection.DOWN)));
                     break;
 
                 case ConsoleKey.LeftArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, DataType.TEXT, "←"));
+                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(MoveDirection.LEFT)));
                     break;
             }
             ServerReceive();

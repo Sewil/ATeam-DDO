@@ -285,11 +285,12 @@ namespace DDOServer {
             }
         }
         static void MovePlayer(Client client, Request request) {
-            if (request.Status != RequestStatus.MOVE || !gameStarted) {
+            if (request.Status != RequestStatus.MOVE || !gameStarted || request.DataType != DataType.JSON) {
                 Send(client, new Response(ResponseStatus.BAD_REQUEST));
             } else {
                 if (client.IsLoggedIn && client.HasSelectedPlayer) {
-                    map.MovePlayer(request.Data, client.SelectedPlayer.Name);
+                    var direction = JsonConvert.DeserializeObject<MoveDirection>(request.Data);
+                    map.MovePlayer(direction, client.SelectedPlayer);
                     Send(client, new Response(ResponseStatus.OK));
                 } else {
                     Send(client, new Response(ResponseStatus.UNAUTHORIZED));
