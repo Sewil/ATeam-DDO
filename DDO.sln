@@ -17,9 +17,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOProtocol", "DDOProtocol\
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOTests", "DDOTests\DDOTests.csproj", "{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient", "..\..\..\..\..\Documents\Visual Studio 2015\Projects\Skolarbete\Kommunikation och nätverksprogrammering\ChatClient\ChatClient\ChatClient.csproj", "{56E30330-91D1-4BC5-A831-EEB124F265EC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatServer", "ChatServer\ChatServer\ChatServer.csproj", "{B70B353C-ED9D-4F41-972C-B677D96EE8E3}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatServer", "..\..\..\..\..\Documents\Visual Studio 2015\Projects\Skolarbete\Kommunikation och nätverksprogrammering\ChatServer\ChatServer\ChatServer.csproj", "{B70B353C-ED9D-4F41-972C-B677D96EE8E3}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient", "ChatClient\ChatClient\ChatClient.csproj", "{56E30330-91D1-4BC5-A831-EEB124F265EC}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -55,14 +55,14 @@ Global
 		{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{56E30330-91D1-4BC5-A831-EEB124F265EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{56E30330-91D1-4BC5-A831-EEB124F265EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{56E30330-91D1-4BC5-A831-EEB124F265EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{56E30330-91D1-4BC5-A831-EEB124F265EC}.Release|Any CPU.Build.0 = Release|Any CPU
 		{B70B353C-ED9D-4F41-972C-B677D96EE8E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{B70B353C-ED9D-4F41-972C-B677D96EE8E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{B70B353C-ED9D-4F41-972C-B677D96EE8E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B70B353C-ED9D-4F41-972C-B677D96EE8E3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{56E30330-91D1-4BC5-A831-EEB124F265EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{56E30330-91D1-4BC5-A831-EEB124F265EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{56E30330-91D1-4BC5-A831-EEB124F265EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{56E30330-91D1-4BC5-A831-EEB124F265EC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
