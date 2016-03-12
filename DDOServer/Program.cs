@@ -224,8 +224,8 @@ namespace DDOServer {
 
                     map.Changed += (m) => {
                         SendStates();
+                        Thread.Sleep(500);
                     };
-                    //SendStates();
                 }
             }
         }
