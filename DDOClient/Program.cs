@@ -161,11 +161,13 @@ namespace DDOClient
             }
         }
         static void StateWriter(Request request) {
-            if(request.Status == RequestStatus.WriteState) {
-                State state = JsonConvert.DeserializeObject<State>(request.Data);
-                Program.state = state;
-                WriteState(state);
-            }
+            try {
+                if (request.Status == RequestStatus.WriteState) {
+                    State state = JsonConvert.DeserializeObject<State>(request.Data);
+                    Program.state = state;
+                    WriteState(state);
+                }
+            } catch {}
         }
         static void GetServerList()
         {
