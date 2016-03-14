@@ -90,6 +90,8 @@ namespace DDOServer {
         static void Main(string[] args) {
             Console.WriteLine("Enter server ip: ");
             ipAddress = IPAddress.Parse(Console.ReadLine());
+            serverEndPoint = new IPEndPoint(ipAddress, 8001);
+            masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
 
             ConnectToMasterServer();
             try {

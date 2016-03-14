@@ -27,6 +27,7 @@ namespace DDOClient
         {
             Console.WriteLine("Enter server/master server ip: ");
             ipAddress = IPAddress.Parse(Console.ReadLine());
+            mserverEndPoint = new IPEndPoint(ipAddress, 8000);
 
             Thread.Sleep(1000);
             GetServerList();

@@ -22,6 +22,7 @@ namespace DDOMasterServer
             Console.WriteLine("Enter master server ip: ");
             var ip = Console.ReadLine();
             ipAddress = IPAddress.Parse(ip);
+            localEndPoint = new IPEndPoint(ipAddress, PORT);
 
             var protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 500);
             var serverList = new List<string>();
