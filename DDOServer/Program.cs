@@ -88,6 +88,9 @@ namespace DDOServer {
         static bool gameStarted = false;
         static Map map = null;
         static void Main(string[] args) {
+            Console.WriteLine("Enter server ip: ");
+            ipAddress = IPAddress.Parse(Console.ReadLine());
+
             ConnectToMasterServer();
             try {
                 server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);

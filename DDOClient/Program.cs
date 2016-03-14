@@ -16,7 +16,8 @@ namespace DDOClient
         static List<ChatMessage> chatLog = new List<ChatMessage>();
         const int BUFFERLENGTHMAP = 2000;
         static Socket client = null;
-        static IPEndPoint serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), 8000);
+        static IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
+        static IPEndPoint mserverEndPoint = new IPEndPoint(ipAddress, 8000);
         static Protocol protocol = null;
         static Response serverResponse = null;
         static bool gameStarted = false;
@@ -24,6 +25,9 @@ namespace DDOClient
         static bool chatOpen = false;
         static void Main(string[] args)
         {
+            Console.WriteLine("Enter server/master server ip: ");
+            ipAddress = IPAddress.Parse(Console.ReadLine());
+
             Thread.Sleep(1000);
             GetServerList();
             bool connected = false;
@@ -165,7 +169,7 @@ namespace DDOClient
         static void GetServerList()
         {
             var masterServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            masterServer.Connect(serverEndPoint);
+            masterServer.Connect(mserverEndPoint);
             protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 2000, masterServer);
 
             protocol.Send(new Request(RequestStatus.None, DataType.Text, "list"));
@@ -183,7 +187,7 @@ namespace DDOClient
             int input = int.Parse(Console.ReadLine());
             int serverPort = int.Parse(response[input + 1]);
             masterServer.Close();
-            serverEndPoint = new IPEndPoint(IPAddress.Parse("127.0.0.1"), serverPort);
+            mserverEndPoint = new IPEndPoint(ipAddress, serverPort);
             Console.Clear();
         }
         static void Login()
@@ -335,7 +339,7 @@ namespace DDOClient
         static void ConnectToServer()
         {
             client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            client.Connect(serverEndPoint);
+            client.Connect(mserverEndPoint);
             protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 5000, client);
         }
     }
