@@ -6,7 +6,6 @@ using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using DDOServer;
 namespace SimpleWebServer
 {
     class Program
@@ -97,7 +96,7 @@ namespace SimpleWebServer
                 HttpListenerRequest request = context.Request;
                 HttpListenerResponse response = context.Response;
                 string responseString = $"<html><body><h2>Stats</h2><ul>";
-                foreach (var stat in DDOServer.Program.db.Stats)
+                foreach (var stat in DDOServer.Program.db.Stat)
                 {
                     responseString += $"<li>{stat.Name}: {stat.Value}</li>";
                 }

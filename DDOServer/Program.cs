@@ -6,59 +6,15 @@ using System.Net.Sockets;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using DDODatabase;
-using DDOProtocol;
+using DDOLibrary;
+using DDOLibrary.GameObjects;
+using DDOLibrary.Protocol;
 using Newtonsoft.Json;
 
 namespace DDOServer {
-    public class State {
-        public string MapStr { get; }
-        public List<Player> Players { get; }
-        public List<Monster> Monsters { get; set; }
-        public List<Potion> Potions { get; set; }
-        public DDODatabase.Player Player { get; set; }
-        public State(string mapStr, List<Player> players, List<Monster> monsters, List<Potion> potions, DDODatabase.Player player) {
-            MapStr = mapStr;
-            Players = players;
-            Monsters = monsters;
-            Potions = potions;
-            Player = player;
-        }
-    }
-    public class ChatMessage {
-        public DateTime Sent { get; }
-        public string Content { get; }
-        public string Name { get; }
-
-        public ChatMessage(DateTime sent, string content, string name) {
-            Sent = sent;
-            Content = content;
-            Name = name;
-        }
-    }
-    public class Client {
-        public bool IsHeard { get; set; }
-        public Protocol Protocol { get; }
-        public bool IsLoggedIn { get { return Account != null; } }
-        public bool HasSelectedPlayer { get { return SelectedPlayer != null; } }
-        public Account Account { get; set; }
-        public DDODatabase.Player SelectedPlayer { get; set; }
-        public string IPAddress {
-            get {
-                if (Protocol != null && Protocol.Socket != null) {
-                    return Protocol.Socket.RemoteEndPoint.ToString();
-                } else {
-                    return null;
-                }
-            }
-        }
-        public Client(Protocol protocol) {
-            Protocol = protocol;
-        }
-    }
     public class Program {
         static readonly object locker = new object();
-        public static ATeamDB db = new ATeamDB();
+        public static ATeamEntities db = new ATeamEntities();
         const int LISTENER_BACKLOG = 100;
         static Socket server = null;
         static Socket masterServer = null;
@@ -67,23 +23,9 @@ namespace DDOServer {
         static IPEndPoint masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
 
         const int MAX_LOGGED_IN_CLIENTS = 5;
-        const int MINIMUM_PLAYERS = 1;
         const int MAX_CONNECTED_CLIENTS = 10;
+        const int MINIMUM_PLAYERS = 1;
         static List<Client> clients = new List<Client>();
-        static IEnumerable<Client> LoggedInClients {
-            get {
-                lock (clients) {
-                    return clients.Where(c => c.IsLoggedIn);
-                }
-            }
-        }
-        static IEnumerable<Client> PlayerClients {
-            get {
-                lock (clients) {
-                    return clients.Where(c => c.HasSelectedPlayer);
-                }
-            }
-        }
 
         static bool gameStarted = false;
         static Map map = null;
@@ -101,8 +43,7 @@ namespace DDOServer {
 
                 new Thread(new ParameterizedThreadStart(AcceptClients)).Start();
                 new Thread(new ParameterizedThreadStart(ListenToClientRequests)).Start();
-                while (true) {
-                }
+                while (true) { }
             } catch (Exception exception) {
                 Console.WriteLine(exception.Message);
                 Console.ReadLine();
@@ -142,13 +83,13 @@ namespace DDOServer {
                             }
                         }
 
-                        if (!countingDown && !gameStarted && PlayerClients.Count() >= MINIMUM_PLAYERS) {
+                        if (!countingDown && !gameStarted && clients.Count(c => c.IsLoggedIn) >= MINIMUM_PLAYERS) {
                             countingDown = true;
-                            Console.WriteLine("Starting game in 10 seconds...");
-                            new TaskFactory().StartNew(() => {
-                                Thread.Sleep(10000);
+                            //Console.WriteLine("Starting game in 10 seconds...");
+                            //new TaskFactory().StartNew(() => {
                                 StartGame();
-                            });
+                                //Thread.Sleep(10000);
+                            //});
                         }
                     }
                 }
@@ -156,126 +97,88 @@ namespace DDOServer {
         }
         static void HandleClientRequest(Client client, Request request) {
             switch (request.Status) {
-                case RequestStatus.SendChatMessage: SendChatMessage(client, request); break;
-                case RequestStatus.Move: MovePlayer(client, request); break;
-                case RequestStatus.Login: Login(client, request); break;
-                case RequestStatus.GetState: GetState(client, request); break;
-                case RequestStatus.GetPlayer: GetPlayerInfo(client, request); break;
-                case RequestStatus.GetAccountPlayers: GetAccountPlayers(client, request); break;
-                case RequestStatus.SelectPlayer: SelectPlayer(client, request); break;
+                case RequestStatus.SEND_CHAT_MESSAGE: SendChatMessage(client, request); break;
+                case RequestStatus.MOVE: MovePlayer(client, request); break;
+                case RequestStatus.LOGIN: Login(client, request); break;
             }
         }
 
         static void SendChatMessage(Client client, Request request) {
-            if (request.Status == RequestStatus.SendChatMessage && request.DataType == DataType.Json && client.HasSelectedPlayer) {
+            if (request.Status == RequestStatus.SEND_CHAT_MESSAGE && request.DataType == DataType.JSON && client.IsLoggedIn) {
                 Send(client, new Response(ResponseStatus.OK));
-                var r = new Request(RequestStatus.SendChatMessage, DataType.Json, request.Data);
-                foreach (var c in PlayerClients.Where(c => c != client)) {
+                var r = new Request(RequestStatus.SEND_CHAT_MESSAGE, DataType.JSON, request.Data);
+                foreach (var c in clients.Where(c => c.IsLoggedIn && c != client)) {
                     Send(c, r);
                 }
             } else {
-                Send(client, new Response(ResponseStatus.BadRequest));
+                Send(client, new Response(ResponseStatus.BAD_REQUEST));
             }
         }
 
-        static void SelectPlayer(Client client, Request request) {
-            if (request.Status == RequestStatus.SelectPlayer && request.DataType == DataType.Json) {
-                if (client.IsLoggedIn) {
-                    client.SelectedPlayer = JsonConvert.DeserializeObject<DDODatabase.Player>(request.Data);
-                    Send(client, new Response(ResponseStatus.OK));
-                } else {
-                    Send(client, new Response(ResponseStatus.Unauthorized));
-                }
-            } else {
-                Send(client, new Response(ResponseStatus.BadRequest));
-            }
-        }
-
-        static void GetAccountPlayers(Client client, Request request) {
-            if (request.Status == RequestStatus.GetAccountPlayers && client.IsLoggedIn) {
-                if (db.Players.Any(p => p.AccountId == client.Account.Id)) {
-                    var players = db.Players.Where(p => p.AccountId == client.Account.Id).Select(p => new {
-                        AccountId = p.AccountId, Damage = p.Damage, Gold = p.Gold, Health = p.Health, Id = p.Id, Name = p.Name
-                    }).ToArray();
-                    Send(client, new Response(ResponseStatus.OK, DataType.Json, JsonConvert.SerializeObject(players)));
-                } else {
-                    Send(client, new Response(ResponseStatus.NotFound));
-                }
-            }
-        }
-        
         static void StartGame() {
-            lock (locker) {
-                if (!gameStarted) {
-                    foreach (var client in LoggedInClients) {
-                        Send(client, new Request(RequestStatus.Start));
-                    }
-                    
-                    var players = new List<Player>();
-                    lock (clients) {
-                        var loggedInClients = LoggedInClients.ToArray();
-                        for (int i = 0; i < loggedInClients.Length; i++) {
-                            var client = loggedInClients[i];
-
-                            var sp = client.SelectedPlayer;
-                            var player = new Player(sp.Name, sp.Health, sp.Damage, sp.Gold, Player.icons.ElementAt(i));
-                            players.Add(player);
-                        }
-                    }
-                    SetPlayersIds(players);
-                    map = Map.Load(players.ToArray());
-
-                    gameStarted = true;
-
-                    map.Changed += (m) => {
-                        SendStates();
-                        Thread.Sleep(500);
-                    };
+            if (!gameStarted) {
+                gameStarted = true;
+                Client[] loggedInClients;
+                lock (clients) {
+                    loggedInClients = clients.Where(c => c.IsLoggedIn).ToArray();
                 }
+
+                var players = new List<Player>();
+                for (int i = 0; i < loggedInClients.Length; i++) {
+                    var client = loggedInClients[i];
+
+                    var player = new Player(Player.IdCounter++, 20, 20, 0, Player.icons.ElementAt(i));
+                    players.Add(player);
+                    client.Player = player;
+                }
+
+                var playerArray = players.ToArray();
+                map = Map.Load(playerArray);
+
+                var state = new State(map.MapToString(), null);
+                foreach (var client in loggedInClients) {
+                    state.Player = client.Player;
+                    var data = JsonConvert.SerializeObject(state);
+                    Send(client, new Request(RequestStatus.START, DataType.JSON, data));
+                }
+
+                map.Changed += (m) => {
+                    UpdateState();
+                    Thread.Sleep(500);
+                };
             }
         }
 
-        static void SetPlayersIds(List<Player> playerList)
-        {
-            int count = 1;
-            if(count < 5)
-            foreach (var player in playerList)
-            {
-                player.Id = count++;
-            }
-        }
-        static void SendStates(Client excludedClient = null) {
-            State state = new State(map.MapToString(), map.players, map.monsters, map.potions, null);
-            lock (locker) {
-                foreach (var c in PlayerClients.Where(c => c != excludedClient)) {
-                    state.Player = c.SelectedPlayer;
-                    Send(c, new Request(RequestStatus.WriteState, DataType.Json, JsonConvert.SerializeObject(state)));
-                }
+        static void UpdateState(Client excludedClient = null) {
+            var state = new State(map.MapToString(), null);
+            foreach (var client in clients) {
+                state.Player = client.Player;
+                var data = JsonConvert.SerializeObject(state);
+                Send(client, new Request(RequestStatus.UPDATE_STATE, DataType.JSON, data));
             }
         }
         static void Login(Client client, Request request) {
-            lock (locker) {
-                if (request.Status != RequestStatus.Login) {
-                    Send(client, new Response(ResponseStatus.BadRequest));
+            lock (client) {
+                if (request.Status != RequestStatus.LOGIN) {
+                    Send(client, new Response(ResponseStatus.BAD_REQUEST));
                 } else if (client.IsLoggedIn) {
-                    Send(client, new Response(ResponseStatus.BadRequest, DataType.Text, "You are already logged in."));
-                } else if (LoggedInClients.Count() >= MAX_LOGGED_IN_CLIENTS) {
-                    Send(client, new Response(ResponseStatus.LimitReached, DataType.Text, $"Only {MAX_LOGGED_IN_CLIENTS} users can be logged in at a time."));
+                    Send(client, new Response(ResponseStatus.BAD_REQUEST, DataType.TEXT, "You are already logged in."));
+                } else if (clients.Count(c => c.IsLoggedIn) >= MAX_LOGGED_IN_CLIENTS) {
+                    Send(client, new Response(ResponseStatus.LIMIT_REACHED, DataType.TEXT, $"Only {MAX_LOGGED_IN_CLIENTS} users can be logged in at a time."));
                 } else {
                     string message = request.Data;
                     string username = message.Split(' ')[0];
-                    Account account = db.Accounts.SingleOrDefault(u => u.Username == username);
-
+                    Account account = db.Account.SingleOrDefault(u => u.Username == username);
 
                     if (account == null) {
-                        Send(client, new Response(ResponseStatus.NotFound, DataType.Text, "This user does not exist."));
-                    } else if (LoggedInClients.Any(c => c.Account == account)) {
-                        Send(client, new Response(ResponseStatus.Unauthorized, DataType.Text, "This user is already logged in."));
+                        Send(client, new Response(ResponseStatus.NOT_FOUND, DataType.TEXT, "This user does not exist."));
+                    } else if (clients.Any(c => c.IsLoggedIn && c.Account == account)) {
+                        Send(client, new Response(ResponseStatus.UNAUTHORIZED, DataType.TEXT, "This user is already logged in."));
                     } else {
                         string password = message.Split(' ')[1];
 
                         if (password != account.Password) {
-                            Send(client, new Response(ResponseStatus.Unauthorized, DataType.Text, "Incorrect password."));
+                            Send(client, new Response(ResponseStatus.UNAUTHORIZED, DataType.TEXT, "Incorrect password."));
                         } else {
                             client.Account = account;
                             Send(client, new Response(ResponseStatus.OK));
@@ -284,38 +187,16 @@ namespace DDOServer {
                 }
             }
         }
-        static void GetPlayerInfo(Client client, Request request) {
-            if (request.Status == RequestStatus.GetPlayer) {
-                if (client.IsLoggedIn && client.HasSelectedPlayer) {
-                    Send(client, new Response(ResponseStatus.OK, DataType.Json, JsonConvert.SerializeObject(client.SelectedPlayer)));
-                } else {
-                    Send(client, new Response(ResponseStatus.Unauthorized));
-                }
-            } else {
-                Send(client, new Response(ResponseStatus.BadRequest));
-            }
-        }
         static void MovePlayer(Client client, Request request) {
-            if (request.Status != RequestStatus.Move || !gameStarted || request.DataType != DataType.Json) {
-                Send(client, new Response(ResponseStatus.BadRequest));
+            if (request.Status != RequestStatus.MOVE || !gameStarted || request.DataType != DataType.JSON) {
+                Send(client, new Response(ResponseStatus.BAD_REQUEST));
             } else {
-                if (client.IsLoggedIn && client.HasSelectedPlayer) {
+                if (client.IsLoggedIn) {
                     var direction = JsonConvert.DeserializeObject<Direction>(request.Data);
-                    map.MovePlayer(direction, client.SelectedPlayer);
+                    map.MovePlayer(direction, client.Player);
                     Send(client, new Response(ResponseStatus.OK));
                 } else {
-                    Send(client, new Response(ResponseStatus.Unauthorized));
-                }
-            }
-        }
-        static void GetState(Client client, Request request) {
-            lock (locker) {
-                if (request.Status == RequestStatus.GetState && gameStarted) {
-                    State state = new State(map.MapToString(), map.players, map.monsters, map.potions, client.SelectedPlayer);
-                    Send(client, new Response(ResponseStatus.OK, DataType.Json, JsonConvert.SerializeObject(state)));
-                    SendStates(client);
-                } else {
-                    Send(client, new Response(ResponseStatus.NotReady, DataType.Text, "GAME NOT STARTED"));
+                    Send(client, new Response(ResponseStatus.UNAUTHORIZED));
                 }
             }
         }
@@ -324,7 +205,7 @@ namespace DDOServer {
             Console.WriteLine($"{DateTime.Now}\t[{serverEndPoint} --> {client.IPAddress}]\t{client.Protocol.GetMessage(message)}");
         }
         static Message Receive(Client client, int msgSizeOverride = 0) {
-            if(msgSizeOverride == 0) {
+            if (msgSizeOverride == 0) {
                 msgSizeOverride = client.Protocol.MsgSize;
             }
 
@@ -340,7 +221,7 @@ namespace DDOServer {
             Console.WriteLine($"{DateTime.Now}\tConnected to MasterServer");
 
             // Låt master-servern veta att det är en server som ansluter
-            p.Send(new Request(RequestStatus.None, DataType.Text, "im a server i promise"));
+            p.Send(new Request(RequestStatus.NONE, DataType.TEXT, "im a server i promise"));
 
             var r = p.Receive() as Response;
             if (r.Status == ResponseStatus.OK) {

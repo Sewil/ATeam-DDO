@@ -3,8 +3,6 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 14
 VisualStudioVersion = 14.0.24720.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDODatabase", "DDODatabase\DDODatabase.csproj", "{E87921CF-B7D4-4612-952F-7438ED4C05E1}"
-EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOClient", "DDOClient\DDOClient.csproj", "{0C6B7520-C3B2-49C6-99B4-34007813A521}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOServer", "DDOServer\DDOServer.csproj", "{E42EF4CF-B72A-4BD0-B16C-148D9AFE7F6C}"
@@ -13,13 +11,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOWebServer", "DDOWebServe
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOMasterServer", "DDOMasterServer\DDOMasterServer.csproj", "{D1AADD89-6B34-4094-BC2D-BFA2E63A0665}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOProtocol", "DDOProtocol\DDOProtocol.csproj", "{D4E49804-188B-4707-BFC3-1469FA75658B}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOTests", "DDOTests\DDOTests.csproj", "{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatServer", "ChatServer\ChatServer\ChatServer.csproj", "{B70B353C-ED9D-4F41-972C-B677D96EE8E3}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ChatClient", "ChatClient\ChatClient\ChatClient.csproj", "{56E30330-91D1-4BC5-A831-EEB124F265EC}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DDOLibrary", "DDOLibrary\DDOLibrary.csproj", "{89C874FF-223E-45F6-9953-B1287E29BEF8}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -27,10 +19,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{E87921CF-B7D4-4612-952F-7438ED4C05E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{E87921CF-B7D4-4612-952F-7438ED4C05E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{E87921CF-B7D4-4612-952F-7438ED4C05E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{E87921CF-B7D4-4612-952F-7438ED4C05E1}.Release|Any CPU.Build.0 = Release|Any CPU
 		{0C6B7520-C3B2-49C6-99B4-34007813A521}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{0C6B7520-C3B2-49C6-99B4-34007813A521}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0C6B7520-C3B2-49C6-99B4-34007813A521}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -47,22 +35,10 @@ Global
 		{D1AADD89-6B34-4094-BC2D-BFA2E63A0665}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D1AADD89-6B34-4094-BC2D-BFA2E63A0665}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D1AADD89-6B34-4094-BC2D-BFA2E63A0665}.Release|Any CPU.Build.0 = Release|Any CPU
-		{D4E49804-188B-4707-BFC3-1469FA75658B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{D4E49804-188B-4707-BFC3-1469FA75658B}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{D4E49804-188B-4707-BFC3-1469FA75658B}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{D4E49804-188B-4707-BFC3-1469FA75658B}.Release|Any CPU.Build.0 = Release|Any CPU
-		{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{10221EF7-7BCF-4D67-9BD1-E02303E38FFA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{B70B353C-ED9D-4F41-972C-B677D96EE8E3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{B70B353C-ED9D-4F41-972C-B677D96EE8E3}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{B70B353C-ED9D-4F41-972C-B677D96EE8E3}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{B70B353C-ED9D-4F41-972C-B677D96EE8E3}.Release|Any CPU.Build.0 = Release|Any CPU
-		{56E30330-91D1-4BC5-A831-EEB124F265EC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{56E30330-91D1-4BC5-A831-EEB124F265EC}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{56E30330-91D1-4BC5-A831-EEB124F265EC}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{56E30330-91D1-4BC5-A831-EEB124F265EC}.Release|Any CPU.Build.0 = Release|Any CPU
+		{89C874FF-223E-45F6-9953-B1287E29BEF8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{89C874FF-223E-45F6-9953-B1287E29BEF8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{89C874FF-223E-45F6-9953-B1287E29BEF8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{89C874FF-223E-45F6-9953-B1287E29BEF8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

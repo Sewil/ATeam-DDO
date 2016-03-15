@@ -1,18 +1,14 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Net.Sockets;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace DDOProtocol
-{
+namespace DDOLibrary.Protocol {
     public class Protocol
     {
         public Socket Socket { get; set; }
         public string Name { get; }
         public Encoding Encoding { get; }
-        public int MsgSize { get; }
+        public int MsgSize { get; set; }
         public Protocol(string name, Encoding encoding, int msgSize, Socket socket = null)
         {
             Name = name;
@@ -41,10 +37,10 @@ namespace DDOProtocol
                         message += attributes[i];
                     }
                 }
-                if (method == TransferMethod.Request) {
+                if (method == TransferMethod.REQUEST) {
                     RequestStatus status = (RequestStatus)Enum.Parse(typeof(RequestStatus), attributes[3]);
                     return new Request(status, dataType, message);
-                } else if (method == TransferMethod.Response) {
+                } else if (method == TransferMethod.RESPONSE) {
                     ResponseStatus status = (ResponseStatus)Enum.Parse(typeof(ResponseStatus), attributes[3]);
                     return new Response(status, dataType, message);
                 } else {
@@ -57,7 +53,7 @@ namespace DDOProtocol
         public string GetMessage(Message transfer)
         {
             string message = string.Empty;
-            if (transfer.Method == TransferMethod.Request)
+            if (transfer.Method == TransferMethod.REQUEST)
             {
                 message = $"{transfer.Method} {transfer.DataType} {Name} {(transfer as Request).Status} {transfer.Data}";
             }

@@ -55,13 +55,9 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DDODatabase\DDODatabase.csproj">
-      <Project>{e87921cf-b7d4-4612-952f-7438ed4c05e1}</Project>
-      <Name>DDODatabase</Name>
-    </ProjectReference>
-    <ProjectReference Include="..\DDOProtocol\DDOProtocol.csproj">
-      <Project>{d4e49804-188b-4707-bfc3-1469fa75658b}</Project>
-      <Name>DDOProtocol</Name>
+    <ProjectReference Include="..\DDOLibrary\DDOLibrary.csproj">
+      <Project>{89c874ff-223e-45f6-9953-b1287e29bef8}</Project>
+      <Name>DDOLibrary</Name>
     </ProjectReference>
     <ProjectReference Include="..\DDOServer\DDOServer.csproj">
       <Project>{e42ef4cf-b72a-4bd0-b16c-148d9afe7f6c}</Project>

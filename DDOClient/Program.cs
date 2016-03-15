@@ -4,8 +4,9 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using System.Threading;
-using DDOProtocol;
-using DDOServer;
+using DDOLibrary;
+using DDOLibrary.GameObjects;
+using DDOLibrary.Protocol;
 using Newtonsoft.Json;
 
 namespace DDOClient
@@ -53,31 +54,25 @@ namespace DDOClient
                 new Thread(new ParameterizedThreadStart(ServerListener)).Start();
 
                 Console.Clear();
+                protocol.MsgSize = 100000;
                 Login();
-                if (SelectPlayer())
-                {
-                    Console.WriteLine("Waiting for players...");
-                    serverRequest += GameStarter;
-                    while (!gameStarted) { }
-                    Console.Clear();
-                    serverRequest += ChatLogger;
-                    serverRequest += StateWriter;
-                    while (true)
-                    {
-                        var key = Console.ReadKey().Key;
+                Console.WriteLine("Waiting for players...");
+                serverRequest += StartGame;
+                while (!gameStarted) { }
+                protocol.MsgSize = 5000;
+                Console.Clear();
+                serverRequest += LogChat;
+                serverRequest += UpdateMap;
+                while (true) {
+                    var key = Console.ReadKey().Key;
 
-                        if(key == ConsoleKey.C) {
-                            serverRequest -= StateWriter;
-                            OpenChat();
-                            serverRequest += StateWriter;
-                        } else {
-                            TryPlayerMove(key);
-                        }
+                    if (key == ConsoleKey.C) {
+                        serverRequest -= UpdateMap;
+                        OpenChat();
+                        serverRequest += UpdateMap;
+                    } else {
+                        TryPlayerMove(key);
                     }
-                }
-                else
-                {
-                    Console.WriteLine("Couldn't select player.");
                 }
             }
             else
@@ -105,7 +100,7 @@ namespace DDOClient
                 } else {
                     var message = new ChatMessage(DateTime.Now, content, state.Player.Name);
                     chatLog.Add(message);
-                    var r = ServerRequest(new Request(RequestStatus.SendChatMessage, DataType.Json, JsonConvert.SerializeObject(message)));
+                    var r = ServerRequest(new Request(RequestStatus.SEND_CHAT_MESSAGE, DataType.JSON, JsonConvert.SerializeObject(message)));
                     if(r.Status != ResponseStatus.OK) {
                         Console.WriteLine("Couldn't send message. Press anywhere to continue...");
                         Console.ReadKey(true);
@@ -130,14 +125,16 @@ namespace DDOClient
                 return null;
             }
         }
-        static void GameStarter(Request r) {
-            if (r.Status == RequestStatus.Start) {
+        static void StartGame(Request request) {
+            if (request.Status == RequestStatus.START) {
+                state = JsonConvert.DeserializeObject<State>(request.Data);
+                Write();
                 gameStarted = true;
             }
         }
-        static void ChatLogger(Request r) {
-            if(r.Status == RequestStatus.SendChatMessage && r.DataType == DataType.Json) {
-                var message = JsonConvert.DeserializeObject<ChatMessage>(r.Data);
+        static void LogChat(Request request) {
+            if(request.Status == RequestStatus.SEND_CHAT_MESSAGE && request.DataType == DataType.JSON) {
+                var message = JsonConvert.DeserializeObject<ChatMessage>(request.Data);
                 chatLog.Add(message);
                 if (chatOpen) {
                     RefreshChat();
@@ -160,22 +157,35 @@ namespace DDOClient
                 }
             }
         }
-        static void StateWriter(Request request) {
+        static void UpdateMap(Request request) {
             try {
-                if (request.Status == RequestStatus.WriteState) {
-                    State state = JsonConvert.DeserializeObject<State>(request.Data);
-                    Program.state = state;
-                    WriteState(state);
+                if (request.Status == RequestStatus.UPDATE_STATE && request.DataType == DataType.JSON) {
+                    state = JsonConvert.DeserializeObject<State>(request.Data);
+                    Write();
                 }
             } catch {}
+        }
+        static void Write() {
+            Console.Clear();
+            var player = state.Player;
+            string mapString = state.MapString;
+            for (int i = 0; i < mapString.Length; i++) {
+                string cell = mapString[i].ToString();
+                if(cell == Environment.NewLine) {
+                    Console.WriteLine();
+                } else {
+                    Console.Write(cell);
+                }
+            }
+            Console.WriteLine($"Name: {player.Name} Health: {player.Health} Gold: {player.Gold} Damage: {player.Damage}");
         }
         static void GetServerList()
         {
             var masterServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             masterServer.Connect(mserverEndPoint);
-            protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 2000, masterServer);
+            Protocol protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 2000, masterServer);
 
-            protocol.Send(new Request(RequestStatus.None, DataType.Text, "list"));
+            protocol.Send(new Request(RequestStatus.NONE, DataType.TEXT, "list"));
             var r = protocol.Receive() as Response;
             var response = r.Data.TrimStart(' ').Split(' ');
             Console.WriteLine("List of servers:");
@@ -204,7 +214,7 @@ namespace DDOClient
                 Console.Write("Password: ");
                 string password = Console.ReadLine();
 
-                response = ServerRequest(new Request(RequestStatus.Login, DataType.Text, $"{username} {password}"));
+                response = ServerRequest(new Request(RequestStatus.LOGIN, DataType.TEXT, $"{username} {password}"));
 
                 Console.WriteLine(response.Status);
                 Console.ReadKey();
@@ -225,119 +235,27 @@ namespace DDOClient
 
             return r;
         }
-        static bool SelectPlayer()
-        {
-            Response r = ServerRequest(new Request(RequestStatus.GetAccountPlayers));
-
-            if(r.DataType != DataType.Json) {
-                Console.WriteLine("Corrupt response from server. Invalid datatype.");
-            } else if(r.Status != ResponseStatus.OK) {
-                Console.WriteLine("Couldn't retrieve players from server. Probably because this account doesn't have any players.");
-            } else {
-                var players = JsonConvert.DeserializeObject<DDODatabase.Player[]>(r.Data);
-                for (int i = 0; i < players.Length; i++) {
-                    Console.WriteLine($"{i} - {players[i].Name}");
-                }
-                Console.WriteLine("Type in the number of your player: ");
-                DDODatabase.Player player = players[int.Parse(Console.ReadLine())];
-
-                r = ServerRequest(new Request(RequestStatus.SelectPlayer, DataType.Json, JsonConvert.SerializeObject(player)));
-
-                if (r.Status == ResponseStatus.OK) {
-                    return true;
-                } else {
-                    Console.WriteLine("Error selecting player.");
-                }
-            }
-
-            return false;
-        }
         static void TryPlayerMove(ConsoleKey key)
         {
             switch (key)
             {
                 case ConsoleKey.UpArrow:
-                    protocol.Send(new Request(RequestStatus.Move, DataType.Json, JsonConvert.SerializeObject(Direction.Up)));
+                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(Direction.Up)));
                     break;
 
                 case ConsoleKey.RightArrow:
-                    protocol.Send(new Request(RequestStatus.Move, DataType.Json, JsonConvert.SerializeObject(Direction.Right)));
+                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(Direction.Right)));
                     break;
 
                 case ConsoleKey.DownArrow:
-                    protocol.Send(new Request(RequestStatus.Move, DataType.Json, JsonConvert.SerializeObject(Direction.Down)));
+                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(Direction.Down)));
                     break;
 
                 case ConsoleKey.LeftArrow:
-                    protocol.Send(new Request(RequestStatus.Move, DataType.Json, JsonConvert.SerializeObject(Direction.Left)));
+                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(Direction.Left)));
                     break;
             }
             ServerReceive();
-        }
-        static void WriteState(State state)
-        {
-            lock (locker) {
-                string mapStr = state.MapStr;
-                int WIDTH = 75;
-                int HEIGHT = 20;
-                int count = 0;
-                char[,] mapCharArray = new char[HEIGHT, WIDTH];
-                for (int y = 0; y < HEIGHT; y++) {
-                    for (int x = 0; x < WIDTH; x++) {
-                        mapCharArray[y, x] = mapStr[count];
-                        count++;
-                    }
-                }
-
-                Console.Clear();
-                Console.ForegroundColor = ConsoleColor.White;
-                for (int y = 0; y < HEIGHT; y++) {
-                    for (int x = 0; x < WIDTH; x++) {
-                        if (mapCharArray[y, x] == '$') {
-                            Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.Write("$");
-                        }
-                        else if (mapCharArray[y, x] == 'P') {
-                            Console.ForegroundColor = ConsoleColor.Red;
-                            Console.Write("P");
-                        } else if (mapCharArray[y, x] == 'M') {
-                            Console.ForegroundColor = ConsoleColor.Magenta;
-                            Console.Write("M");
-                        } else if (mapCharArray[y, x] == '#') {
-                            Console.ForegroundColor = ConsoleColor.DarkGreen;
-                            Console.Write("#");
-                        } else if (mapCharArray[y, x] == '.') {
-                            Console.ForegroundColor = ConsoleColor.White;
-                            Console.Write(".");
-                        } else {
-                            lock (state) {
-                                foreach (var player in state.Players) {
-                                    if(mapCharArray[y, x] == player.Icon.Key) {
-                                        Console.ForegroundColor = player.Icon.Value;
-                                        Console.Write(player.Icon.Key);
-                                    }
-                                }
-                            }
-                        }
-                    }
-
-                    Console.WriteLine();
-                }
-
-                Console.BackgroundColor = ConsoleColor.Black;
-                Console.ForegroundColor = ConsoleColor.White;
-                Console.WriteLine($"Health: {state.Player.Health}, Gold: {state.Player.Gold}, Damage: {state.Player.Damage}");
-            }
-        }
-        static State GetState()
-        {
-            var r = ServerRequest(new Request(RequestStatus.GetState));
-            if (r.DataType == DataType.Json && r.Status == ResponseStatus.OK) {
-                var state = JsonConvert.DeserializeObject<State>(r.Data);
-                return state;
-            } else {
-                return null;
-            }
         }
         static void ConnectToServer()
         {

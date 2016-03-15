@@ -3,7 +3,8 @@ using System.Net.Sockets;
 using System.Text;
 using System.Collections.Generic;
 using System;
-using DDOProtocol;
+using DDOLibrary;
+using DDOLibrary.Protocol;
 
 namespace DDOMasterServer
 {
@@ -40,7 +41,7 @@ namespace DDOMasterServer
                 if (r.Data == "im a server i promise") {
                     Console.WriteLine($"Server {i} connected");
                     string idAndPort = i.ToString() + " " + clientPort;
-                    protocol.Send(new Response(ResponseStatus.OK, DataType.Text, clientPort.ToString()));
+                    protocol.Send(new Response(ResponseStatus.OK, DataType.TEXT, clientPort.ToString()));
                     serverList.Add(idAndPort);
                     i++;
                     clientPort++;
@@ -54,7 +55,7 @@ namespace DDOMasterServer
                     foreach (var server in serverList) {
                         data += " " + server;
                     }
-                    protocol.Send(new Response(ResponseStatus.OK, DataType.Text, data));
+                    protocol.Send(new Response(ResponseStatus.OK, DataType.TEXT, data));
                     i++;
                 }
             }

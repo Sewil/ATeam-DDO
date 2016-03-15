@@ -73,9 +73,9 @@
     </Content>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DDODatabase\DDODatabase.csproj">
-      <Project>{E87921CF-B7D4-4612-952F-7438ED4C05E1}</Project>
-      <Name>DDODatabase</Name>
+    <ProjectReference Include="..\DDOLibrary\DDOLibrary.csproj">
+      <Project>{89C874FF-223E-45F6-9953-B1287E29BEF8}</Project>
+      <Name>DDOLibrary</Name>
     </ProjectReference>
     <ProjectReference Include="..\DDOServer\DDOServer.csproj">
       <Project>{e42ef4cf-b72a-4bd0-b16c-148d9afe7f6c}</Project>

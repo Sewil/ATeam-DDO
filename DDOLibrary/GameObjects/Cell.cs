@@ -1,8 +1,6 @@
 ﻿using System;
-
-namespace DDOServer
-{
-    internal class Cell
+namespace DDOLibrary.GameObjects {
+    public class Cell
     {
         public CellType CellType { get; }
         public bool HasGold { get { return Gold > 0; } }
