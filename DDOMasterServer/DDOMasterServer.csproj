@@ -47,9 +47,6 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\DDOLibrary\DDOLibrary.csproj">
       <Project>{89c874ff-223e-45f6-9953-b1287e29bef8}</Project>
       <Name>DDOLibrary</Name>
