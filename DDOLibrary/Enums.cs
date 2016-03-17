@@ -20,6 +20,7 @@
     public enum ResponseStatus {
         NONE,
         OK,
+        ERROR,
         LIMIT_REACHED,
         UNAUTHORIZED,
         OUT_OF_BOUNDS,

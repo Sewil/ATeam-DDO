@@ -20,17 +20,9 @@ namespace DDOLibrary.GameObjects {
         public const int HEIGHT = 20;
         public Cell[,] Cells = new Cell[HEIGHT, WIDTH];
         const double FOREST_CHANCE = 0.5;
-        private Map(Player[] players) {
-            this.players = players.ToList();
-        }
-        void StartThreads() {
-            new Thread(new ParameterizedThreadStart(MonsterSpawner)).Start();
-            new Thread(new ParameterizedThreadStart(MonsterMover)).Start();
-            new Thread(new ParameterizedThreadStart(PotionSpawner)).Start();
-            new Thread(new ParameterizedThreadStart(GoldSpawner)).Start();
-        }
-        public static Map Load(params Player[] players) {
-            var map = new Map(players);
+
+        public static Map Load() {
+            var map = new Map();
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
                     if (random.NextDouble() <= FOREST_CHANCE) {
@@ -43,15 +35,47 @@ namespace DDOLibrary.GameObjects {
             for (int i = 0; i < random.Next(1, 4); i++) {
                 map.Cells = map.DoSimulationStep();
             }
-            map.SpawnCharacters(players);
-            map.StartThreads();
+
             return map;
         }
-        public static Map Load(Cell[,] cells, params Player[] players) {
-            var map = new Map(players);
-            map.Cells = cells;
-            map.StartThreads();
+        public static Map Load(string chart) {
+            var map = new Map();
+
+            int index = 0;
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int x = 0; x < WIDTH; x++) {
+                    char c = chart[index++];
+                    CellType cellType;
+                    if (c == '.') {
+                        cellType = CellType.Ground;
+                    } else if (c == '#') {
+                        cellType = CellType.Forest;
+                    } else {
+                        throw new ArgumentException($"Char '{c}' not valid. Map needs to be empty.");
+                    }
+
+                    Cell cell = new Cell(y, x, cellType);
+
+                    map.Cells[y, x] = cell;
+                }
+            }
+
             return map;
+        }
+        public void Start(params Player[] players) {
+            SpawnCharacters(players);
+            this.players = players.ToList();
+
+            List<StateChange> changes = new List<StateChange>();
+            foreach (var player in this.players) {
+                changes.Add(StateChange.Add(player));
+            }
+            OnChanged(changes.ToArray());
+
+            new Thread(new ParameterizedThreadStart(MonsterSpawner)).Start();
+            new Thread(new ParameterizedThreadStart(MonsterMover)).Start();
+            new Thread(new ParameterizedThreadStart(PotionSpawner)).Start();
+            new Thread(new ParameterizedThreadStart(GoldSpawner)).Start();
         }
         int CountForestNeighbors(int y, int x) {
             int neighbors = 0;
@@ -83,9 +107,9 @@ namespace DDOLibrary.GameObjects {
             }
             return newCells;
         }
-        public event Action<Map> Changed;
-        public void OnChanged() {
-            Changed?.Invoke(this);
+        public event Action<Map, StateChange[]> Changed;
+        public void OnChanged(params StateChange[] changes) {
+            Changed?.Invoke(this, changes);
         }
         public void Write() {
             Console.Clear();
@@ -96,7 +120,7 @@ namespace DDOLibrary.GameObjects {
                         var player = Cells[y, x].GetPlayer(this);
                         Console.ForegroundColor = player.Icon.Value;
                         Console.Write(player.Icon.Key);
-                    } else if (Cells[y, x].HasGold) {
+                    } else if (Cells[y, x].Gold > 0) {
                         Console.ForegroundColor = ConsoleColor.Yellow;
                         Console.Write("$");
                     } else if (Cells[y, x].GetPotion(this) != null) {
@@ -118,27 +142,29 @@ namespace DDOLibrary.GameObjects {
             }
         }
 
-        public void GoldSpawner(object arg) {
+        private void GoldSpawner(object arg) {
             double goldChance = 0.1;
             int[] goldRange = { 100, 1000 };
             double lastSpawn = 0.0;
 
             while (true) {
                 if (TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds - lastSpawn > SPAWN_TIME_GOLD) {
+                    List<StateChange> changes = new List<StateChange>();
                     lock (Cells) {
-                        foreach (var cell in Cells) {
+                        foreach (Cell cell in Cells) {
                             if (cell.IsWalkable(this) && random.NextDouble() <= goldChance) {
                                 cell.Gold += random.Next(goldRange[0], goldRange[1] + 1);
+                                changes.Add(StateChange.Update(cell));
                             }
                         }
-
-                        lastSpawn = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
-                        OnChanged();
                     }
+
+                    lastSpawn = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
+                    OnChanged(changes.ToArray());
                 }
             }
         }
-        public void SpawnCharacters(params Character[] characters) {
+        private void SpawnCharacters(params Character[] characters) {
             foreach (var character in characters) {
                 List<Cell> emptyCells = new List<Cell>();
                 lock (Cells) {
@@ -167,7 +193,7 @@ namespace DDOLibrary.GameObjects {
                     if (cell.GetPlayer(this) != null) {
                         var player = cell.GetPlayer(this);
                         value += player.Icon.Key;
-                    } else if (cell.HasGold) {
+                    } else if (cell.Gold > 0) {
                         value += "$";
                     } else if (cell.GetPotion(this) != null) {
                         value += "P";
@@ -179,8 +205,6 @@ namespace DDOLibrary.GameObjects {
                         value += ".";
                     }
                 }
-
-                value += Environment.NewLine;
             }
 
             return value;
@@ -204,7 +228,7 @@ namespace DDOLibrary.GameObjects {
                     potions.Add(potion);
                     lastSpawn = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
 
-                    OnChanged();
+                    OnChanged(StateChange.Add(potion));
                 }
             }
         }
@@ -219,7 +243,29 @@ namespace DDOLibrary.GameObjects {
                     }
                     lastSpawn = TimeSpan.FromTicks(DateTime.Now.Ticks).TotalMilliseconds;
 
-                    OnChanged();
+                    OnChanged(StateChange.Add(monster));
+                }
+            }
+        }
+        public void Update(StateChange[] changes) {
+            foreach (var change in changes) {
+                Cell cell = change.Cell;
+                Monster monster = change.Monster;
+                Player player = change.Player;
+                Potion potion = change.Potion;
+
+                if (change.Action == Action.Add) {
+                    if (monster != null) monsters.Add(monster);
+                    if (player != null) players.Add(player);
+                    if (potion != null) potions.Add(potion);
+                } else if (change.Action == Action.Remove) {
+                    if (monster != null) monsters.RemoveAll(m => m.Id == monster.Id);
+                    if (potion != null) potions.RemoveAll(p => p.Id == potion.Id);
+                } else if (change.Action == Action.Update) {
+                    if (cell != null) Cells[cell.Y, cell.X] = cell;
+                    if (monster != null) monsters[monsters.FindIndex(m => m.Id == monster.Id)] = monster;
+                    if (player != null) players[players.FindIndex(p => p.Id == player.Id)] = player;
+                    if (potion != null) potions[potions.FindIndex(p => p.Id == potion.Id)] = potion;
                 }
             }
         }
@@ -279,6 +325,8 @@ namespace DDOLibrary.GameObjects {
                 var newPotion = newCell.GetPotion(this);
                 var newMonster = newCell.GetMonster(this);
 
+                List<StateChange> changes = new List<StateChange>();
+
                 if (newPlayer != null) {
                     newPlayer.Health -= monster.Damage;
                     if (newPlayer.Health <= 0) {
@@ -287,21 +335,31 @@ namespace DDOLibrary.GameObjects {
                         SpawnCharacters(newPlayer);
                         monster.X = newCell.X;
                         monster.Y = newCell.Y;
+
+                        changes.Add(StateChange.Update(monster));
                     }
-                    OnChanged();
+
+                    changes.Add(StateChange.Update(newPlayer));
                 } else if (newPotion != null) {
                     monster.Health += newPotion.Health;
                     potions.Remove(newPotion);
-                    newPotion = null;
                     monster.X = newCell.X;
                     monster.Y = newCell.Y;
-                    OnChanged();
+
+                    changes.Add(StateChange.Update(monster));
+                    changes.Add(StateChange.Remove(newPotion));
                 } else if (newCell.IsWalkable(this)) {
                     monster.Gold += newCell.Gold;
                     newCell.Gold = 0;
                     monster.X = newCell.X;
                     monster.Y = newCell.Y;
-                    OnChanged();
+
+                    changes.Add(StateChange.Update(monster));
+                    changes.Add(StateChange.Update(newCell));
+                }
+
+                if (changes.Count > 0) {
+                    OnChanged(changes.ToArray());
                 }
             }
         }
@@ -314,6 +372,8 @@ namespace DDOLibrary.GameObjects {
                 var newPotion = newCell.GetPotion(this);
                 var newMonster = newCell.GetMonster(this);
 
+                List<StateChange> changes = new List<StateChange>();
+
                 if (newPlayer != null) {
                     newPlayer.Health -= player.Damage;
                     if (newPlayer.Health <= 0) {
@@ -322,31 +382,44 @@ namespace DDOLibrary.GameObjects {
                         SpawnCharacters(newPlayer);
                         player.X = newCell.X;
                         player.Y = newCell.Y;
+
+                        changes.Add(StateChange.Update(player));
                     }
-                    OnChanged();
+
+                    changes.Add(StateChange.Update(newPlayer));
                 } else if (newMonster != null) {
                     newMonster.Health -= player.Damage;
                     if (newMonster.Health <= 0) {
                         player.Gold = newMonster.Gold;
                         monsters.Remove(newMonster);
-                        newMonster = null;
                         player.X = newCell.X;
                         player.Y = newCell.Y;
+
+                        changes.Add(StateChange.Update(player));
+                        changes.Add(StateChange.Remove(newMonster));
+                    } else {
+                        changes.Add(StateChange.Update(newMonster));
                     }
-                    OnChanged();
                 } else if (newPotion != null) {
                     player.Health += newPotion.Health;
                     potions.Remove(newPotion);
-                    newPotion = null;
                     player.X = newCell.X;
                     player.Y = newCell.Y;
-                    OnChanged();
+
+                    changes.Add(StateChange.Update(player));
+                    changes.Add(StateChange.Remove(newPotion));
                 } else if (newCell.IsWalkable(this)) {
                     player.Gold += newCell.Gold;
                     newCell.Gold = 0;
                     player.X = newCell.X;
                     player.Y = newCell.Y;
-                    OnChanged();
+
+                    changes.Add(StateChange.Update(player));
+                    changes.Add(StateChange.Update(newCell));
+                }
+
+                if (changes.Count > 0) {
+                    OnChanged(changes.ToArray());
                 }
             }
         }

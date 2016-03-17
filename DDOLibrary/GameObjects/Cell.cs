@@ -3,7 +3,6 @@ namespace DDOLibrary.GameObjects {
     public class Cell
     {
         public CellType CellType { get; }
-        public bool HasGold { get { return Gold > 0; } }
         public int Gold { get; set; }
         public int Y { get; }
         public int X { get; }
@@ -14,6 +13,7 @@ namespace DDOLibrary.GameObjects {
             X = x;
             CellType = cellType;
         }
+
         public Potion GetPotion(Map map) {
             lock (map.potions) {
                 foreach (var potion in map.potions) {
@@ -50,7 +50,7 @@ namespace DDOLibrary.GameObjects {
             return GetCharacter(map) as Player;
         }
         public bool IsSpawnable(Map map) {
-            return IsWalkable(map) && !HasGold && GetPotion(map)==null;
+            return IsWalkable(map) && Gold == 0 && GetPotion(map)==null;
         }
         public bool IsWalkable(Map map) {
             return CellType == CellType.Ground && GetCharacter(map)==null;

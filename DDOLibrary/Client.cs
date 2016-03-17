@@ -1,8 +1,10 @@
 ﻿
 using DDOLibrary.GameObjects;
+using DDOLibrary.Protocol;
 
 namespace DDOLibrary {
     public class Client {
+        public Response LatestResponse { get; set; }
         public bool IsHeard { get; set; }
         public Protocol.Protocol Protocol { get; }
         public Player Player { get; set; }

@@ -20,12 +20,12 @@ namespace DDOMasterServer
         static UTF8Encoding encoding = new UTF8Encoding();
         static void Main(string[] args)
         {
-            Console.WriteLine("Enter master server ip: ");
-            var ip = Console.ReadLine();
-            ipAddress = IPAddress.Parse(ip);
-            localEndPoint = new IPEndPoint(ipAddress, PORT);
+            //Console.WriteLine("Enter master server ip: ");
+            //var ip = Console.ReadLine();
+            //ipAddress = IPAddress.Parse(ip);
+            //localEndPoint = new IPEndPoint(ipAddress, PORT);
 
-            var protocol = new Protocol("DDO/1.0", new UTF8Encoding(), 500);
+            var protocol = new Protocol(new UTF8Encoding(), 500);
             var serverList = new List<string>();
             Socket listeningSocket = null;
             Socket[] sockets = new Socket[15];
