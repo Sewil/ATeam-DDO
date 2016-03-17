@@ -71,7 +71,6 @@
     </Compile>
     <Compile Include="ChatMessage.cs" />
     <Compile Include="Client.cs" />
-    <Compile Include="Coordinate.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="GameObjects\Cell.cs" />
     <Compile Include="GameObjects\Character.cs" />
