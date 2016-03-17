@@ -6,24 +6,17 @@ using System;
 using DDOLibrary;
 using DDOLibrary.Protocol;
 
-namespace DDOMasterServer
-{
-    class Program
-    {
-        const int LISTENERBACKLOG = 100;
-        const int BUFFERLENGTHPLAYER = 100;
-        const int BUFFERLENGTH = 100;
-        const int PORT = 8000;
+namespace DDOMasterServer {
+    class Program {
         static int clientPort = 8001;
         static IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
-        static IPEndPoint localEndPoint = new IPEndPoint(ipAddress, PORT);
+        static IPEndPoint localEndPoint;
         static UTF8Encoding encoding = new UTF8Encoding();
-        static void Main(string[] args)
-        {
-            //Console.WriteLine("Enter master server ip: ");
-            //var ip = Console.ReadLine();
-            //ipAddress = IPAddress.Parse(ip);
-            //localEndPoint = new IPEndPoint(ipAddress, PORT);
+        static void Main(string[] args) {
+            if (args.Length > 0) {
+                ipAddress = IPAddress.Parse(args[0]);
+            }
+            localEndPoint = new IPEndPoint(ipAddress, 8000);
 
             var protocol = new Protocol(new UTF8Encoding(), 500);
             var serverList = new List<string>();
@@ -34,7 +27,7 @@ namespace DDOMasterServer
             listeningSocket.Bind(localEndPoint);
             Console.WriteLine("MasterServer initialized");
             while (true) {
-                listeningSocket.Listen(LISTENERBACKLOG);
+                listeningSocket.Listen(100);
                 sockets[i] = listeningSocket.Accept();
                 protocol.Socket = sockets[i];
                 var r = protocol.Receive();

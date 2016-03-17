@@ -15,13 +15,13 @@ namespace DDOServer {
     public class Program {
         static readonly object requestLocker = new object();
         public static ATeamEntities db = new ATeamEntities();
-        const int LISTENER_BACKLOG = 100;
         static Socket server = null;
         static Socket masterServer = null;
         static IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
-        static IPEndPoint serverEndPoint = new IPEndPoint(ipAddress, 8001);
-        static IPEndPoint masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
+        static IPEndPoint serverEndPoint;
+        static IPEndPoint masterServerEndPoint;
 
+        const int WAIT_TIME_MS = 10000;
         const int MAX_LOGGED_IN_CLIENTS = 5;
         const int MAX_CONNECTED_CLIENTS = 10;
         const int MINIMUM_PLAYERS = 1;
@@ -30,17 +30,17 @@ namespace DDOServer {
         static bool gameStarted = false;
         static Map map = null;
         static void Main(string[] args) {
-            //Console.WriteLine("Enter server ip: ");
-            //ipAddress = IPAddress.Parse(Console.ReadLine());
-            //serverEndPoint = new IPEndPoint(ipAddress, 8001);
-            //masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
+            if (args.Length > 0) {
+                ipAddress = IPAddress.Parse(args[0]);
+            }
+            masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
 
             ConnectToMasterServer();
             Console.WriteLine($"{DateTime.Now}\t{db.Database.Connection.State}");
             try {
                 server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                 server.Bind(serverEndPoint);
-                server.Listen(LISTENER_BACKLOG);
+                server.Listen(100);
 
                 new Thread(new ParameterizedThreadStart(AcceptClients)).Start();
                 new Thread(new ParameterizedThreadStart(ListenToClientRequests)).Start();
@@ -90,9 +90,9 @@ namespace DDOServer {
 
                         if (!countingDown && !gameStarted && clients.Count(c => c.IsLoggedIn) >= MINIMUM_PLAYERS) {
                             countingDown = true;
-                            Console.WriteLine("Starting game in 10 seconds...");
+                            Console.WriteLine($"Starting game in {WAIT_TIME_MS/1000} seconds...");
                             new TaskFactory().StartNew(() => {
-                                Thread.Sleep(2000);
+                                Thread.Sleep(WAIT_TIME_MS);
                                 StartGame();
                             });
                         }

@@ -12,12 +12,10 @@ using Newtonsoft.Json.Linq;
 
 namespace DDOClient {
     class Program {
-        static readonly object locker = new object();
         static List<ChatMessage> chatLog = new List<ChatMessage>();
-        const int BUFFERLENGTHMAP = 2000;
         static Socket client = null;
         static IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
-        static IPEndPoint mserverEndPoint = new IPEndPoint(ipAddress, 8000);
+        static IPEndPoint masterServerEndPoint;
         static Protocol protocol = null;
         static Response serverResponse = null;
         static bool gameStarted = false;
@@ -25,9 +23,10 @@ namespace DDOClient {
         static Map map = null;
         static bool chatOpen = false;
         static void Main(string[] args) {
-            //Console.WriteLine("Enter server/master server ip: ");
-            //ipAddress = IPAddress.Parse(Console.ReadLine());
-            //mserverEndPoint = new IPEndPoint(ipAddress, 8000);
+            if(args.Length > 0) {
+                ipAddress = IPAddress.Parse(args[0]);
+            }
+            masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
 
             Thread.Sleep(1000);
             GetServerList();
@@ -165,7 +164,7 @@ namespace DDOClient {
         }
         static void GetServerList() {
             var masterServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            masterServer.Connect(mserverEndPoint);
+            masterServer.Connect(masterServerEndPoint);
             Protocol protocol = new Protocol(new UTF8Encoding(), 2000, masterServer);
 
             protocol.Send(new Request(RequestStatus.NONE, DataType.TEXT, "list"));
@@ -182,7 +181,7 @@ namespace DDOClient {
             int input = int.Parse(Console.ReadLine());
             int serverPort = int.Parse(response[input + 1]);
             masterServer.Close();
-            mserverEndPoint = new IPEndPoint(ipAddress, serverPort);
+            masterServerEndPoint = new IPEndPoint(ipAddress, serverPort);
             Console.Clear();
         }
         static void Login() {
@@ -237,7 +236,7 @@ namespace DDOClient {
         }
         static void ConnectToServer() {
             client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            client.Connect(mserverEndPoint);
+            client.Connect(masterServerEndPoint);
             protocol = new Protocol(new UTF8Encoding(), 20000, client);
         }
     }
