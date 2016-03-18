@@ -13,6 +13,7 @@ using Newtonsoft.Json;
 
 namespace DDOServer {
     public class Program {
+        public static List<string> Log = new List<string>();
         static readonly object requestLocker = new object();
         public static ATeamEntities db = new ATeamEntities();
         static Socket server = null;
@@ -21,7 +22,7 @@ namespace DDOServer {
         static IPEndPoint serverEndPoint;
         static IPEndPoint masterServerEndPoint;
 
-        const int WAIT_TIME_MS = 10000;
+        const int WAIT_TIME_MS = 2000;
         const int MAX_LOGGED_IN_CLIENTS = 5;
         const int MAX_CONNECTED_CLIENTS = 10;
         const int MINIMUM_PLAYERS = 1;
@@ -36,67 +37,67 @@ namespace DDOServer {
             masterServerEndPoint = new IPEndPoint(ipAddress, 8000);
 
             ConnectToMasterServer();
-            Console.WriteLine($"{DateTime.Now}\t{db.Database.Connection.State}");
-            try {
-                server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                server.Bind(serverEndPoint);
-                server.Listen(100);
+            LogEntry($"{db.Database.Connection.State}");
 
-                new Thread(new ParameterizedThreadStart(AcceptClients)).Start();
-                new Thread(new ParameterizedThreadStart(ListenToClientRequests)).Start();
-                while (true) { }
-            } catch (Exception exception) {
-                Console.WriteLine(exception.Message);
-                Console.ReadLine();
-            } finally {
-                if (server != null) {
-                    server.Close();
+            server = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+            server.Bind(serverEndPoint);
+            server.Listen(100);
+
+            new Thread(new ParameterizedThreadStart(AcceptClients)).Start();
+            bool countingDown = false;
+            while (true) {
+                lock (clients) {
+                    if (!countingDown && !gameStarted && clients.Count(c => c.IsLoggedIn) >= MINIMUM_PLAYERS) {
+                        countingDown = true;
+                        LogEntry($"Starting game in {WAIT_TIME_MS / 1000} seconds...");
+                        new TaskFactory().StartNew(() => {
+                            Thread.Sleep(WAIT_TIME_MS);
+                            StartGame();
+                        });
+                    }
                 }
             }
         }
+        static void LogEntry(string message) {
+            string logEntry = $"{DateTime.Now}\t{message}";
+            Log.Add(logEntry);
+            Console.WriteLine(logEntry);
+        }
         static void AcceptClients(object arg) {
-            Console.WriteLine($"{DateTime.Now}\tAccepting clients...");
+            LogEntry($"Accepting clients...");
             while (true) {
                 if (clients.Count < MAX_CONNECTED_CLIENTS) {
                     var socket = server.Accept();
-                    var client = new Client(new Protocol(new UTF8Encoding(), 5000, socket));
+                    Client client = new Client(new Protocol(new UTF8Encoding(), 5000, socket));
+                    LogEntry($"{client.IPAddress} connected");
+
                     lock (clients) {
                         clients.Add(client);
                     }
-                    Console.WriteLine($"{DateTime.Now}\tClient accepted ({client.IPAddress})");
-                }
-            }
-        }
-        static void ListenToClientRequests(object arg) {
-            Console.WriteLine($"{DateTime.Now}\tListening to client requests...");
-            bool countingDown = false;
-            while (true) {
-                if (clients.Count > 0) {
-                    lock (clients) {
-                        foreach (var client in clients) {
-                            if (client != null && !client.IsHeard) {
-                                client.IsHeard = true;
-                                new TaskFactory().StartNew(() => {
-                                    var transfer = Receive(client);
-                                    client.IsHeard = false;
-                                    if(transfer is Request) {
-                                        HandleClientRequest(client, (Request)transfer);
-                                    } else if(transfer is Response) {
-                                        client.LatestResponse = (Response)transfer;
-                                    }
-                                });
+                    new TaskFactory().StartNew(() => {
+                        while (true) {
+                            if (client.Protocol.Socket.Connected) {
+                                if (!client.IsHeard) {
+                                    client.IsHeard = true;
+                                    new TaskFactory().StartNew(() => {
+                                        Message message = Receive(client);
+                                        client.IsHeard = false;
+                                        new TaskFactory().StartNew(() => {
+                                            if (message is Request) {
+                                                HandleClientRequest(client, (Request)message);
+                                            } else if (message is Response) {
+                                                client.LatestResponse = (Response)message;
+                                            }
+                                        });
+                                    });
+                                }
+                            } else {
+                                clients.Remove(client);
+                                LogEntry($"{client.IPAddress} disconnected");
+                                break;
                             }
                         }
-
-                        if (!countingDown && !gameStarted && clients.Count(c => c.IsLoggedIn) >= MINIMUM_PLAYERS) {
-                            countingDown = true;
-                            Console.WriteLine($"Starting game in {WAIT_TIME_MS/1000} seconds...");
-                            new TaskFactory().StartNew(() => {
-                                Thread.Sleep(WAIT_TIME_MS);
-                                StartGame();
-                            });
-                        }
-                    }
+                    });
                 }
             }
         }
@@ -160,7 +161,8 @@ namespace DDOServer {
 
         static void UpdateState(params StateChange[] changes) {
             var state = new State(null, null, changes, null);
-            foreach (var client in clients) {
+
+            foreach (var client in clients.Where(c => c.IsLoggedIn)) {
                 state.Player = client.Player;
                 var data = JsonConvert.SerializeObject(state);
                 Request(client, new Request(RequestStatus.UPDATE_STATE, DataType.JSON, data));
@@ -211,7 +213,7 @@ namespace DDOServer {
         }
         static Response Request(Client client, Request request) {
             lock (requestLocker) {
-                Console.WriteLine($"{DateTime.Now}\t[{serverEndPoint} --> {client.IPAddress}]\t{client.Protocol.GetMessage(request)}");
+                LogEntry($"[{serverEndPoint} --> {client.IPAddress}] {client.Protocol.GetMessage(request)}");
                 client.LatestResponse = null;
                 client.Protocol.Send(request);
                 while (client.LatestResponse == null) { }
@@ -221,30 +223,29 @@ namespace DDOServer {
         }
         static void Respond(Client client, Response response) {
             client.Protocol.Send(response);
-            Console.WriteLine($"{DateTime.Now}\t[{serverEndPoint} --> {client.IPAddress}]\t{client.Protocol.GetMessage(response)}");
+            LogEntry($"[{serverEndPoint} --> {client.IPAddress}] {client.Protocol.GetMessage(response)}");
         }
         static Message Receive(Client client, int msgSizeOverride = 0) {
             if (msgSizeOverride == 0) {
                 msgSizeOverride = client.Protocol.MsgSize;
             }
 
-            Message transfer = client.Protocol.Receive();
-            Console.WriteLine($"{DateTime.Now}\t[{serverEndPoint} <-- {client.IPAddress}]\t{client.Protocol.GetMessage(transfer)}");
+            Message message = client.Protocol.Receive();
+            LogEntry($"[{serverEndPoint} <-- {client.IPAddress}] {client.Protocol.GetMessage(message)}");
 
-            return transfer;
+            return message;
         }
         static void ConnectToMasterServer() {
             masterServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
             masterServer.Connect(masterServerEndPoint);
-            Protocol p = new Protocol(new UTF8Encoding(), 100, masterServer);
-            Console.WriteLine($"{DateTime.Now}\tConnected to MasterServer");
+            LogEntry("Connected to MasterServer");
+            Protocol protocol = new Protocol(new UTF8Encoding(), 100, masterServer);
 
-            // Låt master-servern veta att det är en server som ansluter
-            p.Send(new Request(RequestStatus.NONE, DataType.TEXT, "im a server i promise"));
+            protocol.Send(new Request(RequestStatus.NONE, DataType.TEXT, "im a server i promise"));
 
-            var r = p.Receive() as Response;
-            if (r.Status == ResponseStatus.OK) {
-                serverEndPoint = new IPEndPoint(ipAddress, int.Parse(r.Data));
+            var response = (Response)protocol.Receive();
+            if (response.Status == ResponseStatus.OK) {
+                serverEndPoint = new IPEndPoint(ipAddress, int.Parse(response.Data));
             }
         }
     }

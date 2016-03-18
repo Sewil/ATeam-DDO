@@ -221,24 +221,25 @@ namespace DDOClient {
             return r;
         }
         static void TryPlayerMove(ConsoleKey key) {
+            Request request = null;
             switch (key) {
                 case ConsoleKey.UpArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(Direction.Up)));
+                    request = new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(Direction.Up));
                     break;
-
                 case ConsoleKey.RightArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(Direction.Right)));
+                    request = new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(Direction.Right));
                     break;
-
                 case ConsoleKey.DownArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(Direction.Down)));
+                    request = new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(Direction.Down));
                     break;
-
                 case ConsoleKey.LeftArrow:
-                    protocol.Send(new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(Direction.Left)));
+                    request = new Request(RequestStatus.MOVE, DataType.JSON, JsonConvert.SerializeObject(Direction.Left));
                     break;
             }
-            ServerReceive();
+
+            if(request != null) {
+                ServerRequest(request);
+            }
         }
         static void ConnectToServer() {
             client = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
