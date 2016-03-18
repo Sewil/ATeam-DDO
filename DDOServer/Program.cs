@@ -111,9 +111,9 @@ namespace DDOServer {
         static void SendChatMessage(Client client, Request request) {
             if (request.Status == RequestStatus.SEND_CHAT_MESSAGE && request.DataType == DataType.JSON && client.IsLoggedIn) {
                 Respond(client, new Response(ResponseStatus.OK));
-                var r = new Request(RequestStatus.SEND_CHAT_MESSAGE, DataType.JSON, request.Data);
-                foreach (var c in clients.Where(c => c.IsLoggedIn && c != client)) {
-                    Request(c, r);
+                Request req = new Request(RequestStatus.SEND_CHAT_MESSAGE, DataType.JSON, request.Data);
+                foreach (Client c in clients.Where(c => c.IsLoggedIn && c != client)) {
+                    Request(c, req);
                 }
             } else {
                 Respond(client, new Response(ResponseStatus.BAD_REQUEST));

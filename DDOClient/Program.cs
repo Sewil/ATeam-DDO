@@ -12,6 +12,7 @@ using Newtonsoft.Json.Linq;
 
 namespace DDOClient {
     class Program {
+        static readonly object locker = new object();
         static List<ChatMessage> chatLog = new List<ChatMessage>();
         static Socket client = null;
         static IPAddress ipAddress = IPAddress.Parse("127.0.0.1");
@@ -58,9 +59,8 @@ namespace DDOClient {
                     var key = Console.ReadKey().Key;
 
                     if (key == ConsoleKey.C) {
-                        serverRequest -= UpdateState;
                         OpenChat();
-                        serverRequest += UpdateState;
+                        Write();
                     } else {
                         TryPlayerMove(key);
                     }
@@ -74,7 +74,7 @@ namespace DDOClient {
         static void RefreshChat() {
             Console.Clear();
             Console.WriteLine("CHAT\n---------------------------");
-            foreach (var message in chatLog) {
+            foreach (ChatMessage message in chatLog) {
                 Console.WriteLine($"({message.Sent.ToString("HH:mm:ss")}) {message.Name}: {message.Content}");
             }
         }
@@ -125,11 +125,13 @@ namespace DDOClient {
         }
         static void LogChat(Request request) {
             if (request.Status == RequestStatus.SEND_CHAT_MESSAGE && request.DataType == DataType.JSON) {
-                var message = JsonConvert.DeserializeObject<ChatMessage>(request.Data);
+                ChatMessage message = JsonConvert.DeserializeObject<ChatMessage>(request.Data);
                 chatLog.Add(message);
                 if (chatOpen) {
                     RefreshChat();
                 }
+
+                protocol.Send(new Response(ResponseStatus.OK));
             }
         }
 
@@ -152,15 +154,19 @@ namespace DDOClient {
             if (request.Status == RequestStatus.UPDATE_STATE && request.DataType == DataType.JSON) {
                 state = JsonConvert.DeserializeObject<State>(request.Data);
                 map.Update(state.Changes);
-                Write();
+                if(!chatOpen) {
+                    Write();
+                }
                 protocol.Send(new Response(ResponseStatus.OK));
             }
         }
         static void Write() {
-            map.Write();
-            Console.ForegroundColor = ConsoleColor.White;
-            var player = state.Player;
-            Console.WriteLine($"Name: {player.Name} Health: {player.Health} Gold: {player.Gold} Damage: {player.Damage}");
+            lock (locker) {
+                map.Write();
+                Console.ForegroundColor = ConsoleColor.White;
+                var player = state.Player;
+                Console.WriteLine($"Name: {player.Name} Health: {player.Health} Gold: {player.Gold} Damage: {player.Damage}");
+            }
         }
         static void GetServerList() {
             var masterServer = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
