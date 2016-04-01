@@ -164,7 +164,7 @@ namespace DDOServer {
 
             foreach (var client in clients.Where(c => c.IsLoggedIn)) {
                 state.Player = client.Player;
-                var data = JsonConvert.SerializeObject(state);
+                string data = JsonConvert.SerializeObject(state);
                 Request(client, new Request(RequestStatus.UPDATE_STATE, DataType.JSON, data));
             }
         }

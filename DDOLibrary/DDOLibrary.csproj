@@ -78,7 +78,6 @@
     <Compile Include="GameObjects\Monster.cs" />
     <Compile Include="GameObjects\Player.cs" />
     <Compile Include="GameObjects\Potion.cs" />
-    <Compile Include="Game.cs" />
     <Compile Include="StateChange.cs" />
     <Compile Include="State.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
